@@ -1,0 +1,12 @@
+// Prisma schema placeholder.
+// Block 6 will define the real data model for boardrooms, advisors,
+// conversations, messages, and transcript events.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
