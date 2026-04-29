@@ -1,0 +1,1 @@
+Table is a multi-provider, multi-agent decision workspace where advisors determine speaking order via urgency scoring and continue discussion until collective urgency drops below a threshold, signaling that the room has reached a natural stopping point or informal consensus, or the user intervenes.

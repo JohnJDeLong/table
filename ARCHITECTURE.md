@@ -2,7 +2,8 @@
 
 ## Overview
 
-Table is a multi-agent conversational system. Multiple AI advisors, each backed by a different LLM provider, respond to user questions in a structured turn-taking protocol where the order of speakers is determined by the agents themselves via an urgency-rating mechanic.
+
+Table is a multi-provider, multi-agent decision workspace where advisors determine speaking order via an urgency-rating protocol and continue discussion round-by-round until collective urgency drops below a threshold, signaling that the room has reached a natural stopping point and informal consensus, or the user intervenes.
 
 The system has three logical layers:
 
@@ -37,6 +38,25 @@ After each round, a fresh urgency check runs. The conversation auto-pauses when:
 ### Prompting Note
 
 Frame urgency as "how much would the conversation suffer if you stayed quiet?" — *not* "how strongly do you feel about this?" The first produces meaningful variance. The second just gets every model rating itself 7+.
+
+## Orchestration Loop (Pseudo-Code)
+
+while (true):
+
+  scores = parallel(rateUrgency(advisors))
+
+  if max(scores) < pause_threshold:
+      emit("room_quiet")
+      break
+
+  ordered = sort(scores descending)
+
+  for advisor in ordered:
+      streamResponse(advisor)
+
+  if round_count >= max_rounds:
+      emit("round_cap_reached")
+      break
 
 ## Provider Abstraction
 
@@ -168,8 +188,19 @@ Key components:
 
 ## Known Limitations & Future Work
 
-- **Token context growth.** Long conversations include the full transcript in every model's context, which scales quadratically in cost. Future: rolling summarization of older rounds.
+- **Token context growth.** Long conversations include the full transcript in every model's context, which scales quadratically in cost. Future: after round N, summarize older rounds into a rolling context summary while preserving recent turns verbatim.
 - **No agent memory across conversations.** Each conversation is independent. Future: per-advisor long-term memory of the user.
 - **No multi-modal.** Text only. Future: voice input/output, image attachment.
 - **Single-user.** No accounts or auth. Future: shared boardrooms, collaborative sessions.
 - **No analytics.** No usage tracking, no quality scoring, no A/B framework.
+
+
+## Terminology
+
+Advisor = configured persona backed by a provider model
+Agent = runtime execution of an advisor during a turn
+Provider = LLM backend (Anthropic, OpenAI, Google, xAI)
+Round = one urgency cycle
+Turn = one advisor speaking
+Session = one conversation instance
+Transcript = persistent meeting record

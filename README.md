@@ -1,38 +1,98 @@
 # Table
 
-A panel of AI advisors, each backed by a different foundation model, that talk to each other in real time.
+Table is a multi-provider, multi-agent decision workspace where advisors determine speaking order via urgency scoring and continue discussion until collective urgency drops below a threshold, signaling that the room has reached a natural stopping point, or the user intervenes.
+
+Convene a room.  
+Ask a question.  
+Watch the advisors collaborate.
 
 ## What it is
 
-You ask a question. Multiple AI advisors — each running on a different model (Claude, GPT, Gemini, Grok) — first rate how strongly they want to weigh in. They then respond in order of urgency, with each later speaker reading what the earlier ones said. The conversation continues round by round until the room goes quiet on its own or you interrupt.
+A panel of AI advisors — each backed by a different foundation model — reason together in real time. Instead of choosing one model, you convene a room and let the advisors decide who speaks next.
 
-The output reads like meeting minutes — a timestamped, document-style transcript rather than a chat log.
 
-## Why it exists
 
-Different foundation models have genuinely different voices: Claude is reflective, GPT is decisive, Gemini is conversational, Grok is irreverent. Most AI tools hide this by giving you one model at a time. Table treats those differences as the product. You convene the panel; their disagreements are the value.
+## How it works
+
+Each user message triggers a two-phase orchestration:
+
+1. **Urgency round (parallel)** — every advisor rates how strongly they need to respond.
+2. **Response round (sequential)** — advisors speak in urgency order. Each later speaker reads what the earlier speakers said in this round.
+
+After each round, urgency is recomputed. The conversation continues until the room goes quiet on its own (urgency drops below a threshold) or you interrupt.
+
+```
+User message
+   ↓
+Urgency round (parallel)
+   ↓
+Responses in urgency order (sequential)
+   ↓
+Urgency recomputed → continue or pause
+```
+
+The output reads like **meeting minutes** — a timestamped, document-style transcript, not a chat log.
+
+## Architecture highlights
+
+Table implements:
+
+- multi-provider adapter interface
+- urgency-based turn-taking protocol
+- cross-agent context awareness
+- termination-aware discussion loop
+- streaming responses over Server-Sent Events (SSE)
+- persistent meeting transcript model
+
+## Why this exists
+
+Different foundation models reason differently:
+
+Claude — reflective  
+GPT — decisive  
+Gemini — conversational  
+Grok — irreverent  
+
+Most AI tools hide that by giving you one model at a time.
+
+Table treats those differences as the product.
+
+You convene the panel.  
+Their disagreements are the value.
+
 
 ## Tech stack
 
-- Frontend: React + TypeScript + Vite
-- Backend: Node.js + Express + TypeScript
-- Database: PostgreSQL via Prisma (with localStorage fallback)
-- LLM Providers: Anthropic, OpenAI, Google, xAI (or Mistral fallback)
-- Streaming: Server-sent events
+**Frontend**
+- React + TypeScript + Vite
+
+**Backend**
+- Node.js + Express + TypeScript
+
+**Data**
+- PostgreSQL via Prisma (with localStorage fallback)
+
+**Providers**
+- Anthropic, OpenAI, Google, xAI (or Mistral fallback)
+
+**Streaming**
+- Server-Sent Events
+
 
 ## Status
 
 Pre-development. Currently in the docs-and-architecture phase before code starts.
 
+
 ## Project structure
 
-- `README.md` — this file, the orienting overview
-- `architecture.md` — technical spec, the most-consulted doc
-- `AGENTS.md` — guidance for AI assistants working in this repo
-- `CONTRIBUTING.md` — commit format, PR template, code-comment conventions
-- `roadmap.md` — phased plan (MVP → stretch → future)
-- `todo.md` — active task list, block-by-block
-- `agents.local.md` — personal context (gitignored)
+`README.md` — overview and orientation  
+`architecture.md` — system design and orchestration protocol  
+`AGENTS.md` — guidance for AI assistants working in this repo  
+`CONTRIBUTING.md` — commit format, PR template, code-comment conventions  
+`roadmap.md` — phased plan (MVP → stretch → future)  
+`todo.md` — block-by-block execution checklist  
+`agents.local.md` — personal context (gitignored)
 
 
 ## Author
