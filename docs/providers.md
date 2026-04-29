@@ -1,5 +1,7 @@
 # Providers
 
+Source of truth: this file owns the provider adapter contract and provider-specific normalization rules. The high-level system map lives in `architecture.md`; SSE event payloads live in `events.md`.
+
 ## Purpose
 
 This document defines the provider abstraction layer used by Table.
@@ -7,18 +9,17 @@ This document defines the provider abstraction layer used by Table.
 Providers allow Table to communicate with multiple large language model (LLM)
 vendors through a single unified interface.
 
-This ensures:
+This gives the app:
 
-- provider independence
-- consistent orchestration behavior
-- interchangeable model backends
-- predictable streaming semantics
-- future extensibility
+- one interface for many model vendors
+- the same orchestration loop no matter which model is used
+- a clear place to handle each provider's SDK quirks
+- room to add more providers later
 
 
 ## Design philosophy
 
-Table treats model providers as interchangeable execution engines.
+Table treats model providers as swappable execution engines.
 
 The orchestration layer never calls provider SDKs directly.
 
@@ -26,8 +27,7 @@ Instead:
 
 Orchestrator → Provider Interface → Provider Adapter → External API
 
-This architecture ensures new providers can be added without modifying the
-conversation engine.
+This lets us add a provider without rewriting the conversation engine.
 
 
 ## Provider interface
@@ -187,7 +187,7 @@ Gemini Pro
 Grok flagship
 
 
-This keeps orchestration responsive while controlling cost.
+This keeps urgency checks fast and cheap while saving stronger models for full responses.
 
 
 ## Error handling strategy
@@ -201,7 +201,7 @@ Examples:
 - malformed responses
 - streaming interruptions
 
-Adapters return normalized failure signals to the orchestrator.
+Adapters return provider failures in a shape the orchestrator can understand.
 
 
 Example:
@@ -212,7 +212,7 @@ Example:
 }
 
 
-This allows orchestration to continue safely.
+This lets the room keep going when one provider fails.
 
 
 ## Provider configuration

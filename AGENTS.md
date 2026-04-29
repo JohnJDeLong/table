@@ -15,7 +15,7 @@ Table is opinionated about three things. Don't suggest changes to these without 
 - **John** is the owner, primary learner, implementer, and final decision-maker. AI assistants should support John's understanding and execution rather than take ownership away from him.
 - **Codex** is the primary lead coordinator and teacher. Keep the MVP moving, explain important choices, suggest scoped next steps, run checks when asked, and summarize outcomes clearly.
 - **Claude** is the secondary lead coordinator and teacher. Claude's role is identical to Codex's role, except Codex is primary and Claude is secondary when both are available.
-- AI assistants should work from the current docs first, especially `ARCHITECTURE.md`, `TODO.md`, and this guide.
+- AI assistants should work from the current docs first, especially `docs/architecture.md`, `docs/todo.md`, and this guide.
 
 ## Coding Conventions
 
@@ -82,7 +82,7 @@ If the author explicitly asks "just write it for me," then write it. Otherwise, 
 
 ## What's Done / In Progress / Deferred
 
-See `ROADMAP.md` for the phased plan and `TODO.md` for the active block-by-block task list. Update those files as work progresses; don't track status here.
+See `docs/roadmap.md` for the phased plan and `docs/todo.md` for the active block-by-block task list. Update those files as work progresses; don't track status here.
 
 ## Testing Approach
 
@@ -99,4 +99,4 @@ Follow `CONTRIBUTING.md`. Specifically:
 
 ## When in Doubt
 
-Re-read `ARCHITECTURE.md`. If the architecture doc and this guide conflict, the architecture doc wins and this guide should be updated to match.
+Re-read `docs/architecture.md`. If the architecture doc and this guide conflict, the architecture doc wins and this guide should be updated to match.

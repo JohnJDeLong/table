@@ -1,5 +1,7 @@
 # Transcript
 
+Source of truth: this file owns transcript and persistence vocabulary. The current database sketch lives in `architecture.md`; event payloads live in `events.md`.
+
 ## Purpose
 
 This document defines the transcript model used by Table.
@@ -14,12 +16,12 @@ meeting-style records that reflect the orchestration protocol.
 
 ## Design goals
 
-The transcript system is designed to support:
+The transcript system should support:
 
 - meeting-minutes style readability
 - deterministic replay of conversations
-- provider-independent storage
-- streaming-friendly updates
+- storage that does not depend on one provider
+- updates while responses are streaming
 - round-aware conversation structure
 - future summarization support
 
@@ -60,7 +62,7 @@ Metadata describes the session context.
 Example:
 
 {
-  sessionId: string,
+  conversationId: string,
   createdAt: timestamp,
   updatedAt: timestamp,
   boardroomId: string
@@ -73,6 +75,18 @@ Metadata allows transcripts to be:
 - indexed
 - filtered
 - grouped by boardroom
+
+
+## Terminology Mapping
+
+The product may describe a live discussion as a session, but the backend stores it as a `Conversation`. In the MVP database sketch, advisor turns are stored as `Message` rows.
+
+Storage terms:
+
+- `Conversation` = one transcript/session
+- `Message` = one user entry, advisor turn, or persisted transcript block
+- `round_number` = the orchestration round for a message
+- `speaker_id` = the advisor id when the speaker is an advisor
 
 
 ## Advisor registry snapshot
@@ -213,12 +227,12 @@ PostgreSQL (preferred)
 localStorage fallback
 
 
-Example relational structure:
+Possible relational structure:
 
 boardrooms
-sessions
+conversations
 rounds
-turns
+messages
 events
 
 

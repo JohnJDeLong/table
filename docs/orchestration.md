@@ -1,5 +1,7 @@
 # Orchestration
 
+Source of truth: this file owns the urgency loop, speaking order, pause rules, and interrupt behavior. API routes are summarized in `architecture.md`; exact SSE payloads live in `events.md`.
+
 ## Purpose
 
 This document defines the conversation engine that powers Table.
@@ -12,8 +14,7 @@ The orchestrator determines:
 - when the room pauses
 - when the user can intervene
 
-Table conversations follow a structured round-based protocol rather than free-form agent chatter.
-This protocol ensures deterministic turn ordering, bounded execution cost, and provider‑independent orchestration behavior.
+Table conversations follow a structured round-based protocol rather than free-form agent chatter. Speaking order is computed from urgency scores, every conversation has a hard round cap, and the loop works the same no matter which providers back the advisors.
 
 
 ## Definitions
@@ -227,11 +228,11 @@ while true:
 
 The orchestration protocol prioritizes:
 
-- predictable turn ordering
+- urgency-ranked speaking order with clear tie-breaking
 - cross-agent awareness
-- controlled token usage
+- capped rounds so costs cannot run away
 - natural stopping conditions
-- provider independence
+- the same orchestration behavior across providers
 - streaming responsiveness
 
 

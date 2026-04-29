@@ -87,11 +87,10 @@ Pre-development. Currently in the docs-and-architecture phase before code starts
 ## Project structure
 
 `README.md` — overview and orientation  
-`ARCHITECTURE.md` — system design and orchestration protocol  
 `AGENTS.md` — guidance for AI assistants working in this repo  
 `CONTRIBUTING.md` — commit format, PR template, code-comment conventions  
-`ROADMAP.md` — phased plan (MVP → stretch → future)  
-`TODO.md` — block-by-block execution checklist  
+`PROJECT_BRIEF.md` — product brief, MVP success criteria, and scope boundaries  
+`docs/` — system design, protocol, roadmap, and execution docs  
 `agents.local.md` — personal context (gitignored)
 
 

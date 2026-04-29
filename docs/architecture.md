@@ -1,9 +1,11 @@
 # Architecture
 
+Source of truth: this is the system map. Detailed protocol rules live in `orchestration.md`, provider details live in `providers.md`, event payloads live in `events.md`, and transcript storage details live in `transcript.md`.
+
 ## Overview
 
 
-Table is a multi-provider, multi-agent decision workspace where advisors determine speaking order via an urgency-rating protocol and continue discussion round-by-round until collective urgency drops below a threshold, signaling that the room has reached a natural stopping point and informal consensus, or the user intervenes.
+Table is a multi-provider, multi-agent decision workspace. Advisors speak in urgency order, continue round by round, and pause when the room has nothing important left to add or when the user intervenes.
 
 The system has three logical layers:
 
@@ -41,6 +43,8 @@ Frame urgency as "how much would the conversation suffer if you stayed quiet?" �
 
 ## Orchestration Loop (Pseudo-Code)
 
+The full orchestration protocol is defined in `orchestration.md`.
+
 while (true):
 
   scores = parallel(rateUrgency(advisors))
@@ -59,6 +63,8 @@ while (true):
       break
 
 ## Provider Abstraction
+
+The adapter contract and provider-specific behavior are defined in `providers.md`.
 
 Each provider sits behind a uniform interface. Note the distinction between the **provider input shape** (`ProviderMessage`) and the **persisted entity** (`Message` in the data model below). The DB `Message` carries metadata — id, timestamps, urgency scores, speaker info — that providers don't need or accept. The orchestrator transforms `Message[]` into `ProviderMessage[]` at the adapter boundary.
 
@@ -142,6 +148,8 @@ For MVP, advisors are created from a hardcoded set of 4 defaults (one per provid
 
 ## API Surface
 
+The exact SSE payloads are defined in `events.md`.
+
 Backend exposes:
 
 - `POST /api/conversations` — start a new conversation in a boardroom
@@ -151,14 +159,14 @@ Backend exposes:
 - `GET /api/boardrooms` — list boardrooms
 - `GET /api/boardrooms/:id` — fetch boardroom + advisors
 
-The SSE stream from `POST /messages` emits typed events:
+The SSE stream from `POST /api/conversations/:id/messages` emits typed events:
 
-- `round_start` — `{ round_number }`
-- `urgency_score` — `{ advisor_id, urgency, reason }` (one per advisor)
-- `speaker_start` — `{ advisor_id }`
-- `token` — `{ advisor_id, text }`
-- `speaker_end` — `{ advisor_id }`
-- `round_end` — `{ round_number, paused: boolean, pause_reason: string }`
+- `round_start` — `{ roundIndex }`
+- `urgency_scores` — `{ scores: [{ advisorId, urgency, reason }] }`
+- `speaker_start` — `{ advisorId }`
+- `token` — `{ advisorId, text }`
+- `speaker_end` — `{ advisorId }`
+- `round_end` — `{ roundIndex, paused: boolean, pauseReason: string }`
 - `error` — `{ message }`
 
 ## Frontend Structure
@@ -202,5 +210,5 @@ Agent = runtime execution of an advisor during a turn
 Provider = LLM backend (Anthropic, OpenAI, Google, xAI)
 Round = one urgency cycle
 Turn = one advisor speaking
-Session = one conversation instance
+Conversation = one persisted discussion session
 Transcript = persistent meeting record
