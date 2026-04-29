@@ -1,0 +1,29 @@
+{
+  "name": "table",
+  "version": "1.0.0",
+  "description": "Table is a multi-provider, multi-agent decision workspace where advisors determine speaking order via urgency scoring and continue discussion until collective urgency drops below a threshold, signaling that the room has reached a natural stopping point, or the user intervenes.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\"",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:host": "concurrently \"npm run dev --prefix server\" \"npm run dev:host --prefix client\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnJDeLong/table.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/JohnJDeLong/table/issues"
+  },
+  "homepage": "https://github.com/JohnJDeLong/table#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
