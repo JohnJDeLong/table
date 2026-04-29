@@ -1,122 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, type SyntheticEvent } from 'react';
+import './App.css';
+
+type TestResponse = { 
+  text?: string;
+  usage?: unknown;
+  error?: string;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [prompt, setPrompt] = useState ("Say hello from Table in one sentence."); 
+  const [response, setResponse] = useState<TestResponse | null>(null); 
+  const [isLoading, setIsLoading] = useState(false); 
+
+  async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();// prevents entire page reload 
+    setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
+    setResponse(null);// clears out old responses saved in state
+
+    //post request made to front end that get forwarded to backend via configured proxy 
+    const res = await fetch('/api/test', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    }); 
+
+    const data = (await res.json()) as TestResponse; // recive back the data 
+    setResponse(data); // save the data in response var
+    setIsLoading(false) // reset the loading variable because process is complete
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <main className='app-shell'>
+      <section className='transcript'>
+        <header className="transcript-header">
+          <p className="eyebrow">Table</p>
+          <h1>Advisory Room</h1>
+          <p>Ask one advisor through the backend. Multi-advisor orchestration comes next.</p>
+        </header>
+
+        <form className='composer' onSubmit={handleSubmit}>
+          <label htmlFor='prompt'>Prompt</label>
+          <textarea 
+            id='prompt'
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+          />
+          <button type='submit' disabled={isLoading}>
+            {isLoading? "thinking..." : "Ask"}
+          </button>
+        </form>
+        {response && ( 
+            <article className='message-block'>
+              <p className='speaker'>Anthropic</p>
+              {response.error ? <p>{response.error}</p>: <p>{response.text}</p>}
+            </article>
+          )}
+
       </section>
+    </main>
+  );
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
 }
 
-export default App
+export default App; 
