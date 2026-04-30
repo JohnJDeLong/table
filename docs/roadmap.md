@@ -12,14 +12,14 @@ The shippable, demo-ready version.
 - User interrupt control
 - Minutes-style transcript UI
 - 4 default advisors with hardcoded personas (one per provider, tuned to lean into each model's strengths)
-- Conversation persistence (Postgres preferred, localStorage as fallback)
+- Conversation persistence with PostgreSQL via Prisma
 - Local demo with recorded video
 
 ## Phase 2: Stretch (during MVP window if ahead, or post-bootcamp)
 
 - Custom user-defined personas (advisor editor)
 - Multiple boardrooms (Career Council, Project Boardroom, etc.)
-- Deploy to public URL (Vercel + Render + Supabase)
+- Deploy to public URL (Vercel + Render + Supabase Postgres)
 - @-mention to call on a specific advisor out of order
 - "Save quote" feature for memorable advisor lines
 - Voice UI for speaking to and hearing from the room
@@ -38,7 +38,7 @@ The shippable, demo-ready version.
 If the MVP slips, drop in this order:
 
 1. **Deploy** → record local demo video instead
-2. **Postgres** → fall back to localStorage
+2. **Hosted database** → run Postgres locally for demo if Supabase/deploy slips
 3. **4th provider** → ship with 3
 4. **Polish on Minutes UI** → ship with functional but unstyled UI
 

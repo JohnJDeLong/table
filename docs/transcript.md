@@ -221,10 +221,9 @@ Termination states allow deterministic replay and debugging.
 
 ## Persistence strategy (MVP)
 
-Initial persistence options:
+MVP persistence uses Prisma with PostgreSQL.
 
-PostgreSQL (preferred)
-localStorage fallback
+For local development, `DATABASE_URL` points to a Postgres database. For hosted deployment, the likely database is Supabase Postgres. The app does not plan to use localStorage as its main persistence layer.
 
 
 Possible relational structure:

@@ -70,7 +70,7 @@ Their disagreements and discussion create better results.
 - Node.js + Express + TypeScript
 
 **Data**
-- PostgreSQL via Prisma (with localStorage fallback)
+- PostgreSQL via Prisma, with Supabase Postgres as the likely hosted database
 
 **Providers**
 - Anthropic, OpenAI, Google, xAI (or Mistral fallback)

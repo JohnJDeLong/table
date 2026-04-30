@@ -190,7 +190,7 @@ Key components:
 | Cross-agent awareness | Yes — each speaker sees prior speakers in this round | Enables real debate, not parallel monologues |
 | Round termination | Self-paused via urgency threshold | Prevents runaway costs while feeling natural |
 | Persona work | Baked-in defaults for MVP, custom in stretch | Demo magic requires personas; building a persona editor is post-MVP |
-| Persistence | Postgres for MVP if time, localStorage fallback | Real DB is better signal but localStorage unblocks the build |
+| Persistence | PostgreSQL via Prisma | Real relational persistence is part of the learning goal; Supabase Postgres is the likely hosted database |
 | Deploy | Stretch goal | Local + recorded video demo is acceptable fallback |
 | UI aesthetic | Minutes (document) not chat | Differentiation from every other AI app |
 

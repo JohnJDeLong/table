@@ -57,9 +57,11 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 6: Persistence
 
-- [ ] Decide: Postgres or localStorage. Postgres unless behind schedule.
-- [ ] If Postgres: Prisma schema for boardrooms, advisors, conversations, messages
-- [ ] If localStorage: simple JSON serialization
+- [ ] Install and configure Prisma
+- [ ] Use PostgreSQL as the persistence layer
+- [ ] Use Supabase Postgres for hosted database if deploying
+- [ ] Write Prisma schema for boardrooms, advisors, conversations, messages, and transcript events
+- [ ] Run the first migration
 - [ ] Save messages as they generate, load on app reload
 - [ ] Commit
 
@@ -110,4 +112,3 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [ ] Reserved for slippage
 - [ ] If on schedule: tackle one stretch goal (deploy, custom personas, or @-mentions)
-
