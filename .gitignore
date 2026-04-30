@@ -18,6 +18,7 @@ out/
 
 # Personal / local-only docs
 agents.local.md
+docs/technicalChallenges.md
 
 # Logs
 logs/
