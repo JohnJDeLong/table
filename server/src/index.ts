@@ -1,4 +1,5 @@
 import express from "express";
+import type { Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Anthropic from "@anthropic-ai/sdk";
@@ -15,6 +16,11 @@ const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+function sendSse(res: Response, event: string, data: unknown) {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`); 
+}
+
 app.get("/api/health", (_req, res) => {
     res.json({ ok: true}); 
 });
@@ -30,17 +36,41 @@ app.post("/api/test", async (req, res) => {
             ? req.body.prompt 
             : "Say hello from Table in one sentence."; 
 
-        const message = await anthropic.messages.create({
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
+        res.flushHeaders();
+
+        sendSse(res, "speaker_start", { advisorId: "anthropic" });
+
+
+        const stream = await anthropic.messages.create({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 300, 
             messages: [{role: 'user', content: prompt}], 
+            stream: true,
         });
+        
+        for await (const event of stream) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                sendSse(res, "token", {
+                    advisorId: "anthropic",
+                    text: event.delta.text,
+                });
+            }
+        }
 
-        const text = message.content.map((block) => (block.type === 'text' ? block.text : '')).join('');
-        res.json({ text, usage: message.usage });
+        sendSse(res, "speaker_end", { advisorId: "anthropic" });
+        res.end();
     } catch (error) {
         console.error(error); 
-        res.status(500).json({ error: "Failed to call Anthropic"}); 
+
+        if (!res.headersSent) { 
+            res.status(500).json({ error: "Failed to call Anthropic" });
+            return; 
+        }
+        sendSse(res, "error", { message: "Failed to call Anthropic" });
+        res.end();
     }
 });
 

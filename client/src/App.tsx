@@ -1,21 +1,20 @@
 import { useState, type SyntheticEvent } from 'react';
 import './App.css';
 
-type TestResponse = { 
-  text?: string;
-  usage?: unknown;
+type StreamState = { 
+  text: string;
   error?: string;
 };
 
 function App() {
   const [prompt, setPrompt] = useState ("Say hello from Table in one sentence."); 
-  const [response, setResponse] = useState<TestResponse | null>(null); 
+  const [response, setResponse] = useState<StreamState | null>(null); 
   const [isLoading, setIsLoading] = useState(false); 
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();// prevents entire page reload 
     setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
-    setResponse(null);// clears out old responses saved in state
+    setResponse({ text: '' });// starts a fresh streamed response 
 
     //post request made to front end that get forwarded to backend via configured proxy 
     const res = await fetch('/api/test', {
@@ -26,9 +25,59 @@ function App() {
       body: JSON.stringify({ prompt }),
     }); 
 
-    const data = (await res.json()) as TestResponse; // recive back the data 
-    setResponse(data); // save the data in response var
-    setIsLoading(false) // reset the loading variable because process is complete
+    if(!res.body) {
+      setResponse({ text: "", error: "No response stream returned."});
+      setIsLoading(false);
+      return; 
+    }
+    const reader = res.body.getReader(); 
+    const decoder = new TextDecoder(); 
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read(); 
+
+      if (done) {
+        break; 
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+      
+      for (const eventText of events) {
+        const eventLine = eventText
+          .split('\n')
+          .find((line) => line.startsWith('event: '));
+        
+        const dataLine = eventText
+          .split('\n')
+          .find((line) => line.startsWith('data: '));
+        
+        if(!eventLine || !dataLine) {
+          continue;
+        }
+        
+        const eventName = eventLine.replace("event: ", "");
+        const data = JSON.parse(dataLine.replace("data: ", '')); 
+
+        if (eventName === "token") {
+          setResponse((current) => ({
+            text: `${current?.text ?? ""}${data.text}`,
+          }));
+        }
+        
+        if (eventName === "error") {
+          setResponse({
+            text: "", 
+            error: data.message,
+          });
+        }
+      }
+      
+    }
+
+    setIsLoading(false); 
   }
 
   return (
