@@ -32,7 +32,6 @@ The shippable, demo-ready version.
 ## Phase 3: Future (post-bootcamp ambition)
 
 - See `PROJECT_BRIEF.md` for the official stretch features list.
-- Per-advisor long-term memory of the user
 
 ## Cut Order Under Pressure
 

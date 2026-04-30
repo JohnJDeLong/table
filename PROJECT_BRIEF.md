@@ -49,6 +49,7 @@ These are not required for the MVP demo, but are strong follow-up candidates if 
 - User accounts and authentication
 - Multi-user boardrooms where multiple users can sit in on the same meeting
 - Free-for-all mode where urgency ordering is turned off and users and advisors can speak freely
+- Per-advisor long-term memory of the user
 
 ## Out Of Scope For MVP
 
