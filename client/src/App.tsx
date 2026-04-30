@@ -12,7 +12,7 @@ function App() {
   const [response, setResponse] = useState<TestResponse | null>(null); 
   const [isLoading, setIsLoading] = useState(false); 
 
-  async function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();// prevents entire page reload 
     setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
     setResponse(null);// clears out old responses saved in state
