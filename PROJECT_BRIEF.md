@@ -34,6 +34,23 @@ The room pauses when the advisors no longer think the conversation needs more in
 - The conversation can pause naturally when urgency drops below a threshold.
 - The demo can run locally and be recorded clearly.
 
+## Stretch Features
+
+These are not required for the MVP demo, but are strong follow-up candidates if the core build is ahead of schedule.
+
+- Custom user-defined personas through an advisor editor
+- Multiple boardrooms, such as Career Council or Project Boardroom
+- Public deployment with hosted frontend, backend, and database
+- `@`-mentions to call on a specific advisor out of urgency order
+- Save quote feature for memorable advisor lines
+- Voice UI for speaking to and hearing from the room
+- CLI interface where advisors work toward consensus and return their strongest shared answer, with Codex and Claude tooling available
+- Cross-interface awareness so different Table surfaces can share relevant user context and data
+- User accounts and authentication
+- Multi-user boardrooms where multiple users can sit in on the same meeting
+- Free-for-all mode where urgency ordering is turned off and users and advisors can speak freely
+- Per-advisor long-term memory of the user
+
 ## Out Of Scope For MVP
 
 - User accounts and auth

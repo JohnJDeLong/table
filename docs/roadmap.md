@@ -22,14 +22,16 @@ The shippable, demo-ready version.
 - Deploy to public URL (Vercel + Render + Supabase)
 - @-mention to call on a specific advisor out of order
 - "Save quote" feature for memorable advisor lines
+- Voice UI for speaking to and hearing from the room
+- CLI interface where advisors work toward consensus and return their strongest shared answer, with Codex and Claude tooling available
+- Cross-interface awareness so different Table surfaces can share relevant user context and data
+- User accounts and authentication
+- Multi-user boardrooms where multiple users can sit in on the same meeting
+- Free-for-all mode where urgency ordering is turned off and users and advisors can speak freely
 
 ## Phase 3: Future (post-bootcamp ambition)
 
-- CLI version (`table ask "should I take this offer"`) sharing the same backend
-- Voice input/output (talk to the room)
-- Cross-system shared work awareness — agents aware of context from other tools (notes, files, browser)
-- Per-advisor long-term memory of the user
-- Multi-user shared boardrooms
+- See `PROJECT_BRIEF.md` for the official stretch features list.
 
 ## Cut Order Under Pressure
 

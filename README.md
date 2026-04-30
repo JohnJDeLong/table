@@ -89,7 +89,7 @@ Pre-development. Currently in the docs-and-architecture phase before code starts
 `README.md` — overview and orientation  
 `AGENTS.md` — guidance for AI assistants working in this repo  
 `CONTRIBUTING.md` — commit format, PR template, code-comment conventions  
-`PROJECT_BRIEF.md` — product brief, MVP success criteria, and scope boundaries  
+`PROJECT_BRIEF.md` — product brief, MVP success criteria, stretch features, and scope boundaries  
 `docs/` — system design, protocol, roadmap, and execution docs  
 `agents.local.md` — personal context (gitignored)
 

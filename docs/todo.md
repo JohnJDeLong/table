@@ -4,26 +4,26 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Pre-flight (before Block 1)
 
-- [ ] Get Anthropic API key
+- [x] Get Anthropic API key
 - [ ] Get OpenAI API key
 - [ ] Get Google AI Studio key
 - [ ] Apply for xAI / Grok API access. If blocked, pick fallback (Mistral or Llama-via-Groq) and note in `agents.local.md`
 - [ ] Set billing alerts at $50 on each provider
 
-## Block 1: Setup + first non-streamed call
+## Block 1: Setup + first non-streamed call — Complete
 
 > **Finish line:** one React page calls one Express route that calls Anthropic non-streaming, and the response renders in the UI. Ugly is fine. End-to-end is the only goal.
 
-- [ ] `npm create vite@latest` for the client
-- [ ] Set up `server/` with Express + TypeScript
-- [ ] Wire client to server (proxy in `vite.config.ts`)
-- [ ] Add Anthropic SDK
-- [ ] Create `.env` with `ANTHROPIC_API_KEY` and a committed `.env.example` documenting required keys
-- [ ] One route: `POST /api/test` calls Anthropic, returns the (non-streamed) response
-- [ ] Render the response in the React UI
-- [ ] Commit
+- [x] `npm create vite@latest` for the client
+- [x] Set up `server/` with Express + TypeScript
+- [x] Wire client to server (proxy in `vite.config.ts`)
+- [x] Add Anthropic SDK
+- [x] Create `.env` with `ANTHROPIC_API_KEY` and a committed `.env.example` documenting required keys
+- [x] One route: `POST /api/test` calls Anthropic, returns the (non-streamed) response
+- [x] Render the response in the React UI
+- [x] Commit
 
-## Block 2: Streaming end-to-end (one provider)
+## Block 2: Streaming end-to-end (one provider) 
 
 - [ ] Convert `POST /api/test` to SSE
 - [ ] Stream tokens from Anthropic to client
@@ -110,5 +110,4 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [ ] Reserved for slippage
 - [ ] If on schedule: tackle one stretch goal (deploy, custom personas, or @-mentions)
-
 
