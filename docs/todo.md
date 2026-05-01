@@ -25,11 +25,11 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 2: Streaming end-to-end (one provider) 
 
-- [ ] Convert `POST /api/test` to SSE
-- [ ] Stream tokens from Anthropic to client
-- [ ] React renders tokens as they arrive
-- [ ] Fight CORS / proxy buffering issues
-- [ ] Commit
+- [x] Convert `POST /api/test` to SSE
+- [x] Stream tokens from Anthropic to client
+- [x] React renders tokens as they arrive
+- [x] Fight CORS / proxy buffering issues
+- [x] Commit
 
 ## Block 3: Provider abstraction + 2nd provider
 
