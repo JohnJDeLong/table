@@ -5,7 +5,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 ## Pre-flight (before Block 1)
 
 - [x] Get Anthropic API key
-- [ ] Get OpenAI API key
+- [x] Get OpenAI API key
 - [ ] Get Google AI Studio key
 - [ ] Apply for xAI / Grok API access. If blocked, pick fallback (Mistral or Llama-via-Groq) and note in `agents.local.md`
 - [ ] Set billing alerts at $50 on each provider
@@ -31,13 +31,13 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Fight CORS / proxy buffering issues
 - [x] Commit
 
-## Block 3: Provider abstraction + 2nd provider
+## Block 3: Provider abstraction + 2nd provider — Complete
 
-- [ ] Define `LLMProvider` interface in `server/src/providers/types.ts`
-- [ ] Refactor Anthropic call into `AnthropicAdapter`
-- [ ] Add `OpenAIAdapter` behind the same interface
-- [ ] Verify both stream identically into the UI
-- [ ] Commit
+- [x] Define `LLMProvider` interface in `server/src/providers/types.ts`
+- [x] Refactor Anthropic call into `AnthropicAdapter`
+- [x] Add `OpenAIAdapter` behind the same interface
+- [x] Verify both stream identically into the UI
+- [x] Commit
 
 ## Block 4: Urgency rating round (Phase 1)
 
