@@ -4,8 +4,5 @@ export type ProviderMessage = {
 };
 
 export interface LLMProvider {
-  streamResponse(
-    systemPrompt: string,
-    conversation: ProviderMessage[]
-  ): AsyncIterable<string>;
+  streamResponse(systemPrompt: string,conversation: ProviderMessage[]): AsyncIterable<string>;
 }

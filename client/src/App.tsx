@@ -6,10 +6,15 @@ type StreamState = {
   error?: string;
 };
 
+type ProviderId = "anthropic" | "openai";
+
+
 function App() {
   const [prompt, setPrompt] = useState ("Say hello from Table in one sentence."); 
   const [response, setResponse] = useState<StreamState | null>(null); 
   const [isLoading, setIsLoading] = useState(false); 
+  const [provider, setProvider] = useState<ProviderId>("anthropic");
+
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();// prevents entire page reload 
@@ -22,7 +27,7 @@ function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, provider }),
     }); 
 
     if(!res.body) {
@@ -96,13 +101,23 @@ function App() {
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
           />
+          <label htmlFor="provider">Provider</label>
+            <select
+              id="provider"
+              value={provider}
+              onChange={(event) => setProvider(event.target.value as ProviderId)}
+            >
+              <option value="anthropic">Anthropic</option>
+              <option value="openai">OpenAI</option>
+            </select>
+
           <button type='submit' disabled={isLoading}>
             {isLoading? "thinking..." : "Ask"}
           </button>
         </form>
         {response && ( 
             <article className='message-block'>
-              <p className='speaker'>Anthropic</p>
+              <p className='speaker'>{provider}</p>
               {response.error ? <p>{response.error}</p>: <p>{response.text}</p>}
             </article>
           )}
