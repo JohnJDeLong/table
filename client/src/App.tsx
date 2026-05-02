@@ -8,18 +8,38 @@ type StreamState = {
 
 type ProviderId = "anthropic" | "openai";
 
+type UrgencyRating = {
+  advisorId: string;
+  urgency: number;
+  reason: string;
+};
+
 
 function App() {
   const [prompt, setPrompt] = useState ("Say hello from Table in one sentence."); 
   const [response, setResponse] = useState<StreamState | null>(null); 
   const [isLoading, setIsLoading] = useState(false); 
   const [provider, setProvider] = useState<ProviderId>("anthropic");
+  const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
 
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+    setUrgencyRatings([]); // clears old ratings 
     event.preventDefault();// prevents entire page reload 
     setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
     setResponse({ text: '' });// starts a fresh streamed response 
+
+    const urgencyRes = await fetch("/api/urgency-test", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    const urgencyData = (await urgencyRes.json()) as { ratings: UrgencyRating[] };
+    setUrgencyRatings(urgencyData.ratings);
+
 
     //post request made to front end that get forwarded to backend via configured proxy 
     const res = await fetch('/api/test', {
@@ -115,9 +135,24 @@ function App() {
             {isLoading? "thinking..." : "Ask"}
           </button>
         </form>
+
+        {urgencyRatings.length > 0 && (
+          <section className="urgency-panel">
+            <p className="eyebrow">Show of hands</p>
+            {urgencyRatings.map((rating) => (
+              <article className="urgency-card" key={rating.advisorId}>
+                <p className="speaker">{rating.advisorId}</p>
+                <p>{rating.urgency}/10</p>
+                <p>{rating.reason}</p>
+              </article>
+            ))}
+          </section>
+        )}
+
+
         {response && ( 
             <article className='message-block'>
-              <p className='speaker'>{provider}</p>
+              <p className='speaker'>Response from {provider}</p>
               {response.error ? <p>{response.error}</p>: <p>{response.text}</p>}
             </article>
           )}
