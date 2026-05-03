@@ -14,7 +14,7 @@ The orchestrator determines:
 - when the room pauses
 - when the user can intervene
 
-Table conversations follow a structured round-based protocol rather than free-form agent chatter. Speaking order is computed from urgency scores, every conversation has a hard round cap, and the loop works the same no matter which providers back the advisors.
+Table conversations follow a structured round-based protocol rather than free-form agent chatter. Speaking order is computed from live urgency scores, every conversation has a temporary turn cap during MVP, and the loop works the same no matter which providers back the advisors.
 
 
 ## Definitions
@@ -25,7 +25,7 @@ The full orchestration execution triggered by a single user message.
 
 **Round**
 
-One urgency evaluation phase followed by sequential advisor responses.
+The full room response to one user message. A round begins when the user speaks, advisors repeatedly recalibrate urgency against the updated conversation, and the round ends when the room goes quiet.
 
 **Turn**
 
@@ -40,15 +40,15 @@ The lifecycle for a single cycle:
 
 User message  
 ↓  
-Urgency round (parallel)  
+Urgency rating (parallel)  
 ↓  
-Sort advisors by urgency  
+Highest urgent advisor speaks  
 ↓  
-Sequential advisor responses  
+Conversation updates with that response  
 ↓  
-Urgency recomputed  
+Urgency recomputed against the updated conversation  
 ↓  
-Continue or pause  
+Continue, let another advisor speak, or pause  
 
 
 ## Urgency round
@@ -78,25 +78,27 @@ The pause threshold is a configurable system value that determines when the conv
 If no advisor reports urgency above this threshold, the room pauses.
 
 
-## Turn ordering
+## Turn selection
 
-After urgency scoring:
+After each urgency scoring pass:
 
 - Advisors are sorted by urgency (descending)
-- Highest urgency speaks first
-- Remaining advisors speak sequentially
-- Each advisor sees the full transcript including earlier speakers in the same round
+- The highest-urgency advisor speaks if their score meets the speaking threshold
+- The advisor's response is added to the conversation
+- All advisors recalibrate urgency against the updated conversation before the next speaker is chosen
+- An advisor may speak more than once in a round if the conversation makes their input newly important
+- Advisors whose urgency drops below threshold stay quiet
 
 Tie-breaking rule:
 
 Advisor order defined in board configuration.
 
 
-## Response round
+## Response turns
 
-During the response round:
+During each response turn:
 
-Each advisor:
+The selected advisor:
 
 - receives the full transcript
 - receives prior responses from this round
@@ -127,7 +129,7 @@ Advisors do not see:
 
 ## Round completion
 
-After all advisors speak:
+After each advisor response:
 
 Urgency is recomputed.
 
@@ -135,9 +137,9 @@ Possible outcomes:
 
 | Condition | Result |
 |----------|--------|
-| max urgency ≥ threshold | start next round |
-| max urgency < threshold | pause conversation |
-| round cap reached | pause conversation |
+| max urgency ≥ threshold | next highest urgent advisor may speak |
+| max urgency < threshold | end the round because the room is quiet |
+| temporary turn cap reached | pause conversation as a safety fallback |
 | user interrupt | pause conversation |
 
 
@@ -160,19 +162,21 @@ The user may:
 - end the session
 
 
-## Round cap safety limit
+## Temporary turn cap safety limit
 
 To prevent runaway conversations:
 
-A maximum round cap exists.
+A temporary maximum turn cap exists during MVP.
 
 Example:
 
-MAX_ROUNDS = 10
+MAX_TURNS_PER_ROUND = 10
 
 If reached:
 
 Conversation pauses automatically.
+
+The intended round-ending condition is the room going quiet. The turn cap is an MVP safety fuse for provider loops, parsing bugs, or unexpected high-urgency behavior, and may be removed once the urgency mechanic is reliable.
 
 
 ## User interrupts
@@ -208,19 +212,24 @@ round_end
 
 while true:
 
-  scores = parallel(rateUrgency(advisors))
+  turn_count = 0
 
-  if max(scores) < pause_threshold:
-      emit("room_quiet")
-      break
+  while turn_count < MAX_TURNS_PER_ROUND:
+      scores = parallel(rateUrgency(advisors, conversation_so_far))
+      emit("urgency_scores", scores)
 
-  ordered = sort(scores descending)
+      top = max(scores)
 
-  for advisor in ordered:
-      streamResponse(advisor)
+      if top.urgency < pause_threshold:
+          emit("room_quiet")
+          break
 
-  if round_count >= MAX_ROUNDS:
-      emit("round_cap_reached")
+      streamResponse(top.advisor)
+      append response to conversation_so_far
+      turn_count += 1
+
+  if turn_count >= MAX_TURNS_PER_ROUND:
+      emit("turn_cap_reached")
       break
 
 
@@ -230,7 +239,8 @@ The orchestration protocol prioritizes:
 
 - urgency-ranked speaking order with clear tie-breaking
 - cross-agent awareness
-- capped rounds so costs cannot run away
+- live urgency recalibration after each advisor response
+- temporary turn cap so costs cannot run away during MVP
 - natural stopping conditions
 - the same orchestration behavior across providers
 - streaming responsiveness
@@ -252,7 +262,6 @@ The orchestrator does not yet support:
 
 Possible future improvements:
 
-- reactive urgency updates mid-round
 - advisor-to-advisor reply routing
 - consensus detection layer
 - dynamic threshold tuning

@@ -5,12 +5,12 @@
 The shippable, demo-ready version.
 
 - All 4 providers behind a uniform adapter interface (Anthropic, OpenAI, Google, xAI/fallback)
-- Urgency-rating mechanic (Phase 1)
-- Sequential responses with cross-agent context (Phase 2)
+- Live urgency-rating mechanic
+- Sequential responses with cross-agent context and recalibration after each advisor response
 - Auto-pause when urgency drops below threshold
-- Hard round cap as safety net
+- Temporary max turns per round as MVP safety net
 - User interrupt control
-- Minutes-style transcript UI
+- Clean group-conversation UI with meeting-minutes PDF export
 - 4 default advisors with hardcoded personas (one per provider, tuned to lean into each model's strengths)
 - Conversation persistence with PostgreSQL via Prisma
 - Local demo with recorded video
@@ -40,6 +40,6 @@ If the MVP slips, drop in this order:
 1. **Deploy** → record local demo video instead
 2. **Hosted database** → run Postgres locally for demo if Supabase/deploy slips
 3. **4th provider** → ship with 3
-4. **Polish on Minutes UI** → ship with functional but unstyled UI
+4. **Polish on conversation UI / PDF export** → ship with functional but unstyled UI
 
-Do **not** cut: the urgency mechanic, cross-agent context awareness, or the Minutes aesthetic direction.
+Do **not** cut: the urgency mechanic, cross-agent context awareness, or the ability to turn the discussion into meeting minutes.

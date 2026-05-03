@@ -10,15 +10,15 @@ Transcripts are the persistent record of a boardroom session. They capture
 advisor participation, speaking order, urgency signals, and conversation
 progression across rounds.
 
-Unlike traditional chat logs, transcripts in Table are structured as
-meeting-style records that reflect the orchestration protocol.
+Transcripts in Table are structured conversation records that reflect the orchestration protocol and can be rendered later as meeting minutes.
 
 
 ## Design goals
 
 The transcript system should support:
 
-- meeting-minutes style readability
+- live conversation readability
+- meeting-minutes export
 - deterministic replay of conversations
 - storage that does not depend on one provider
 - updates while responses are streaming
@@ -178,7 +178,7 @@ Examples:
 
 round_start
 room_quiet
-round_cap_reached
+turn_cap_reached
 user_interrupt
 
 
@@ -211,7 +211,7 @@ Each transcript records why the conversation ended.
 Possible values:
 
 room_quiet
-round_cap_reached
+turn_cap_reached
 user_interrupt
 session_complete
 
@@ -240,7 +240,7 @@ This structure mirrors orchestration hierarchy.
 
 ## Transcript rendering model
 
-Transcripts render as meeting minutes rather than chat bubbles.
+Transcripts render live as a clean group conversation. The durable artifact can be exported as meeting minutes.
 
 Example:
 

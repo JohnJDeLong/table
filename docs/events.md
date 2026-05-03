@@ -163,14 +163,14 @@ Payload:
 }
 
 
-### round_cap_reached
+### turn_cap_reached
 
-Signals that the maximum round limit has been reached.
+Signals that the temporary maximum turn limit for the current round has been reached.
 
 Payload:
 
 {
-  maxRounds: number
+  maxTurnsPerRound: number
 }
 
 
@@ -202,6 +202,7 @@ The backend guarantees:
 
 - events are emitted in deterministic order
 - tokens are streamed sequentially
+- urgency_scores may be emitted multiple times in a round as advisors recalibrate after each response
 - speaker_start always precedes token events
 - speaker_end always follows token events
 - round_end always terminates a round
@@ -215,9 +216,11 @@ speaker_start
 token
 token
 speaker_end
+urgency_scores
 speaker_start
 token
 speaker_end
+urgency_scores
 round_end
 
 
@@ -259,6 +262,11 @@ speaker_start
 token
 token
 speaker_end
+urgency_scores
+speaker_start
+token
+speaker_end
+urgency_scores
 round_end
 round_start
 urgency_scores

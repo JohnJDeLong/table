@@ -8,7 +8,7 @@ Table is opinionated about three things. Don't suggest changes to these without 
 
 1. **The urgency mechanic is the differentiator.** Don't replace it with round-robin or a simpler turn-order even if it would "simplify" things.
 2. **Provider abstraction is non-negotiable.** Don't bypass the adapter interface to call a provider SDK directly, even for "just this one case."
-3. **The UI is meeting Minutes, not chat.** Don't add chat bubbles, message reactions, or other social-app patterns. The aesthetic is a typed document.
+3. **The live UI is conversational; the artifact is meeting minutes.** The interaction surface may use a clean group-chat layout because it better reflects live back-and-forth discussion. Preserve the meeting-minutes concept as an exportable/downloadable document, not as the default live interaction style.
 
 ## Collaboration Model
 

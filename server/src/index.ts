@@ -6,6 +6,9 @@ import { AnthropicAdapter } from "./providers/AnthropicAdapter.js";
 import { OpenAIAdapter } from "./providers/OpenAIAdapter.js";
 import type { LLMProvider, ProviderMessage } from "./providers/types.js";
 import { rankAdvisorsByUrgency, type Advisor } from "./orchestrator/rankAdvisorsByUrgency.js";
+import { runAdvisorRound } from "./orchestrator/runAdvisorRound.js";
+
+
 
 dotenv.config({ path: '../.env' }); 
 
@@ -62,6 +65,43 @@ app.post("/api/urgency-test", async (req, res) => {
     res.status(500).json({ error: "Failed to rate urgency" });
   }
 });
+
+
+app.post("/api/round-test", async (req, res) => {
+  try {
+    const prompt =
+      typeof req.body.prompt === "string" && req.body.prompt.trim().length > 0
+        ? req.body.prompt
+        : "Start a short advisor round.";
+
+    const conversation: ProviderMessage[] = [{ role: "user", content: prompt }];
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    for await (const event of runAdvisorRound(advisors, conversation, {
+      speakingThreshold: 3,
+      maxTurnsPerRound: 10,
+    })) {
+      sendSse(res, event.type, event);
+    }
+
+    res.end();
+  } catch (error) {
+    console.error(error);
+
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to run advisor round" });
+      return;
+    }
+
+    sendSse(res, "error", { message: "Failed to run advisor round" });
+    res.end();
+  }
+});
+
 
 
 

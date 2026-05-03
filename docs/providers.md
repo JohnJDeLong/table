@@ -44,13 +44,13 @@ Requests a structured urgency score from the provider.
 
 Purpose:
 
-Determines speaking order for the current round.
+Determines whether the advisor should speak next given the current conversation.
 
 Input:
 
 - advisor persona prompt
 - conversation transcript
-- prior round context
+- prior responses from the current round, if any
 
 Output:
 
@@ -165,9 +165,9 @@ If needed:
 
 ## Model selection strategy
 
-Each provider may use different models for different phases:
+Each provider may use different models for different jobs:
 
-Phase 1 (urgency scoring)
+Urgency scoring
 
 Lower-cost fast models:
 
@@ -177,7 +177,7 @@ Gemini Flash
 Grok-mini
 
 
-Phase 2 (response generation)
+Response generation
 
 Higher-quality reasoning models:
 
