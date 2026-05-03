@@ -49,11 +49,11 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 5: Sequential responses with cross-context (Phase 2) — In Progress
 
-- [ ] Orchestrator: after each advisor response, recalibrate urgency before selecting the next speaker
-- [ ] Each advisor sees the full transcript including prior speakers in this round
-- [ ] SSE events: `speaker_start`, `token`, `speaker_end`, `round_end`
-- [ ] UI: render each advisor's response in sequence
-- [ ] Commit
+- [x] Orchestrator: after each advisor response, recalibrate urgency before selecting the next speaker
+- [x] Each advisor sees the full transcript including prior speakers in this round
+- [x] SSE events: `speaker_start`, `token`, `speaker_end`, `round_end`
+- [x] UI: render each advisor's response in sequence
+- [x] Commit
 
 ## Block 6: Persistence
 
