@@ -6,7 +6,7 @@ type StreamState = {
   error?: string;
 };
 
-type ProviderId = "anthropic" | "openai";
+
 
 type UrgencyRating = {
   advisorId: string;
@@ -14,40 +14,37 @@ type UrgencyRating = {
   reason: string;
 };
 
+type AdvisorMessage = {
+  advisorId: string;
+  text: string;
+};
+
+
 
 function App() {
   const [prompt, setPrompt] = useState ("Say hello from Table in one sentence."); 
   const [response, setResponse] = useState<StreamState | null>(null); 
   const [isLoading, setIsLoading] = useState(false); 
-  const [provider, setProvider] = useState<ProviderId>("anthropic");
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
+  const [messages, setMessages] = useState<AdvisorMessage[]>([]);
 
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+    setMessages([]);
     setUrgencyRatings([]); // clears old ratings 
     event.preventDefault();// prevents entire page reload 
     setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
     setResponse({ text: '' });// starts a fresh streamed response 
 
-    const urgencyRes = await fetch("/api/urgency-test", {
+
+
+    //post request made to front end that get forwarded to backend via configured proxy 
+    const res = await fetch('/api/round-test', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt }),
-    });
-
-    const urgencyData = (await urgencyRes.json()) as { ratings: UrgencyRating[] };
-    setUrgencyRatings(urgencyData.ratings);
-
-
-    //post request made to front end that get forwarded to backend via configured proxy 
-    const res = await fetch('/api/test', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt, provider }),
     }); 
 
     if(!res.body) {
@@ -86,18 +83,51 @@ function App() {
         const eventName = eventLine.replace("event: ", "");
         const data = JSON.parse(dataLine.replace("data: ", '')); 
 
-        if (eventName === "token") {
-          setResponse((current) => ({
-            text: `${current?.text ?? ""}${data.text}`,
-          }));
+        if (eventName === "urgency_scores") {
+          setUrgencyRatings(data.scores);
         }
-        
+
+        if (eventName === "speaker_start") {
+          setMessages((current) => [
+            ...current,
+            {
+              advisorId: data.advisorId,
+              text: "",
+            },
+          ]);
+        }
+
+        if (eventName === "token") {
+          setMessages((current) => {
+            const next = [...current];
+            const lastMessage = next[next.length - 1];
+
+            if (!lastMessage || lastMessage.advisorId !== data.advisorId) {
+              return [
+                ...next,
+                {
+                  advisorId: data.advisorId,
+                  text: data.text,
+                },
+              ];
+            }
+
+            next[next.length - 1] = {
+              ...lastMessage,
+              text: `${lastMessage.text}${data.text}`,
+            };
+
+            return next;
+          });
+        }
+
         if (eventName === "error") {
           setResponse({
-            text: "", 
+            text: "",
             error: data.message,
           });
         }
+
       }
       
     }
@@ -121,15 +151,7 @@ function App() {
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
           />
-          <label htmlFor="provider">Provider</label>
-            <select
-              id="provider"
-              value={provider}
-              onChange={(event) => setProvider(event.target.value as ProviderId)}
-            >
-              <option value="anthropic">Anthropic</option>
-              <option value="openai">OpenAI</option>
-            </select>
+          
 
           <button type='submit' disabled={isLoading}>
             {isLoading? "thinking..." : "Ask"}
@@ -150,12 +172,20 @@ function App() {
         )}
 
 
-        {response && ( 
-            <article className='message-block'>
-              <p className='speaker'>Response from {provider}</p>
-              {response.error ? <p>{response.error}</p>: <p>{response.text}</p>}
-            </article>
-          )}
+        {messages.map((message, index) => (
+          <article className="message-block" key={`${message.advisorId}-${index}`}>
+            <p className="speaker">{message.advisorId}</p>
+            <p>{message.text}</p>
+          </article>
+        ))}
+
+        {response?.error && (
+          <article className="message-block">
+            <p className="speaker">Error</p>
+            <p>{response.error}</p>
+          </article>
+        )}
+
 
       </section>
     </main>

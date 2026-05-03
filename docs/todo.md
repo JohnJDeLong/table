@@ -23,7 +23,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Render the response in the React UI
 - [x] Commit
 
-## Block 2: Streaming end-to-end (one provider) 
+## Block 2: Streaming end-to-end (one provider) — Complete
 
 - [x] Convert `POST /api/test` to SSE
 - [x] Stream tokens from Anthropic to client
@@ -39,17 +39,17 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Verify both stream identically into the UI
 - [x] Commit
 
-## Block 4: Urgency rating round (Phase 1)
+## Block 4: Urgency rating round (Phase 1) — Complete
 
-- [ ] Add `rateUrgency` to the `LLMProvider` interface
-- [ ] Implement for both adapters
-- [ ] Orchestrator: fan out parallel rate calls, return sorted scores
-- [ ] UI: show "show of hands" badges with scores + reasons
-- [ ] Commit
+- [x] Add `rateUrgency` to the `LLMProvider` interface
+- [x] Implement for both adapters
+- [x] Orchestrator: fan out parallel rate calls, return sorted scores
+- [x] UI: show "show of hands" badges with scores + reasons
+- [x] Commit
 
-## Block 5: Sequential responses with cross-context (Phase 2)
+## Block 5: Sequential responses with cross-context (Phase 2) — In Progress
 
-- [ ] Orchestrator: after Phase 1, iterate through advisors in urgency order
+- [ ] Orchestrator: after each advisor response, recalibrate urgency before selecting the next speaker
 - [ ] Each advisor sees the full transcript including prior speakers in this round
 - [ ] SSE events: `speaker_start`, `token`, `speaker_end`, `round_end`
 - [ ] UI: render each advisor's response in sequence
@@ -65,20 +65,21 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Save messages as they generate, load on app reload
 - [ ] Commit
 
-## Block 7: Minutes UI polish
+## Block 7: Conversation UI + Minutes export
 
-- [ ] Document-style layout (no chat bubbles)
+- [ ] Clean group-chat layout for the live advisor discussion
 - [ ] Speaker labels with role and color accent
 - [ ] Round indicator
 - [ ] Pause / interrupt button always visible
-- [ ] Typography that reads like meeting minutes
+- [ ] Visual treatment that keeps the conversation focused and work-like, not social
+- [ ] Export/download finished discussion as a meeting-minutes PDF
 - [ ] Commit
 
 ## Block 8: 3rd provider + auto-pause logic
 
 - [ ] Add Gemini adapter
 - [ ] Implement multi-round loop with urgency-threshold pause
-- [ ] Add hard round cap
+- [ ] Add temporary max turns per round safety cap
 - [ ] UI: "the room has gone quiet" state
 - [ ] Commit
 

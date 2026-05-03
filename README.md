@@ -31,7 +31,7 @@ Responses in urgency order (sequential)
 Urgency recomputed → continue or pause
 ```
 
-The output reads like **meeting minutes** — a timestamped, document-style transcript, not a chat log.
+The live experience reads like a focused group conversation. When the user is done, Table can produce a timestamped **meeting-minutes** document for export.
 
 ## Architecture highlights
 

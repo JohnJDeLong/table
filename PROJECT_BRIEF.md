@@ -2,7 +2,7 @@
 
 ## One-Sentence Pitch
 
-Table is an AI advisory room where multiple model-backed advisors discuss a question together, speak in urgency-ranked turns, and produce a meeting-minutes-style transcript.
+Table is an AI advisory room where multiple model-backed advisors discuss a question together, speak in urgency-ranked turns, and produce a downloadable meeting-minutes document.
 
 ## Who It Is For
 
@@ -30,7 +30,8 @@ The room pauses when the advisors no longer think the conversation needs more in
 - A user can ask one question and receive responses from multiple advisors.
 - Speaking order changes based on urgency scores, not a fixed round-robin order.
 - Each advisor can see earlier responses from the same round.
-- The transcript reads like meeting minutes rather than chat bubbles.
+- The live UI makes the advisor discussion easy to follow as a group conversation.
+- The user can export the finished discussion as a meeting-minutes PDF.
 - The conversation can pause naturally when urgency drops below a threshold.
 - The demo can run locally and be recorded clearly.
 

@@ -11,30 +11,30 @@ The system has three logical layers:
 
 1. **Provider adapter layer** — normalizes the differences between LLM provider SDKs behind a single streaming interface
 2. **Orchestration layer** — runs the urgency-rating round, sequences responses, manages cross-agent context, decides when the room pauses
-3. **UI layer** — Minutes-style transcript with real-time streaming and user controls
+3. **UI layer** — group-conversation interface with real-time streaming, user controls, and meeting-minutes export
 
 ## The Urgency Mechanic
 
-This is the core product mechanic. Every user message triggers a two-phase orchestration.
+This is the core product mechanic. Every user message triggers a live urgency loop.
 
-### Phase 1: Urgency Rating (parallel, fast, cheap)
+### Step 1: Urgency Rating (parallel, fast, cheap)
 
 All advisors are called in parallel with a small prompt:
 
 > "Rate your urgency to respond on a 1-10 scale. 10 means staying quiet would seriously hurt the conversation. 1 means you have nothing distinct to add. Reply only with JSON: { urgency: number, reason: string }."
 
-Phase 1 uses each provider's *cheap* tier (e.g. claude-haiku, gpt-4o-mini, gemini-flash) since the response is a small JSON. Cost matters here — Phase 1 runs every round.
+Urgency rating uses each provider's *cheap* tier (e.g. claude-haiku, gpt-4o-mini, gemini-flash) since the response is a small JSON. Cost matters here because urgency is recalculated after each advisor response.
 
-### Phase 2: Sequential Response (in urgency order)
+### Step 2: Highest-Urgency Response
 
-Advisors are sorted by urgency descending. Each then generates its full streamed response in order, with all previous responses *in this round* included in its context. Phase 2 uses each provider's flagship model.
+Advisors are sorted by urgency descending. If the top advisor meets the speaking threshold, that advisor generates a full streamed response using the current conversation context. The response is appended to the conversation, then all advisors rate urgency again against the updated context before the next speaker is chosen. An advisor may speak more than once in the same round if the conversation makes their input newly important.
 
 ### Pause Conditions
 
-After each round, a fresh urgency check runs. The conversation auto-pauses when:
+After each advisor response, a fresh urgency check runs. The conversation auto-pauses when:
 
 - Maximum urgency across all advisors falls below a threshold (default 3) — "the room has gone quiet"
-- Round counter hits a hard cap (default 10) — safety net against runaway loops
+- Temporary turn counter hits a hard cap (default 10) — MVP safety net against runaway loops
 - User manually interrupts
 
 ### Prompting Note
@@ -47,19 +47,22 @@ The full orchestration protocol is defined in `orchestration.md`.
 
 while (true):
 
-  scores = parallel(rateUrgency(advisors))
+  turn_count = 0
 
-  if max(scores) < pause_threshold:
-      emit("room_quiet")
-      break
+  while turn_count < max_turns_per_round:
+      scores = parallel(rateUrgency(advisors, conversation_so_far))
 
-  ordered = sort(scores descending)
+      if max(scores) < pause_threshold:
+          emit("room_quiet")
+          break
 
-  for advisor in ordered:
-      streamResponse(advisor)
+      speaker = highest_urgency(scores)
+      streamResponse(speaker)
+      append response to conversation_so_far
+      turn_count += 1
 
-  if round_count >= max_rounds:
-      emit("round_cap_reached")
+  if turn_count >= max_turns_per_round:
+      emit("turn_cap_reached")
       break
 
 ## Provider Abstraction
@@ -111,7 +114,7 @@ Boardroom
   name              "Career Council"
   description
   pause_threshold   3
-  max_rounds        10
+  max_turns_per_round  10
   created_at
 
 Advisor
@@ -171,15 +174,16 @@ The SSE stream from `POST /api/conversations/:id/messages` emits typed events:
 
 ## Frontend Structure
 
-The UI is a single-page React app. The main view is the **Minutes transcript** — a typed-document layout with timestamped speaker labels, no chat bubbles. Each advisor has a color and a name, but the visual identity is the document, not the avatars.
+The UI is a single-page React app. The main view is a focused **group conversation** where user and advisor turns appear as readable message blocks. Each advisor has a color and name so the back-and-forth is easy to follow. When the user is done, the conversation can be exported as a meeting-minutes PDF.
 
 Key components:
 
-- `MinutesTranscript` — the main scrolling document
+- `ConversationThread` — the main scrolling group conversation
 - `MessageBlock` — one user message or one advisor response
 - `UrgencyBadges` — the live "show of hands" before responses start streaming
 - `RoundIndicator` — tells the user which round and whether the room paused
 - `ComposerBar` — input field with pause/interrupt controls
+- `MinutesExport` — generate/download a meeting-minutes PDF from the finished discussion
 - `BoardroomSidebar` — switch between boardrooms (stretch)
 
 ## Key Trade-offs and Decisions
@@ -187,12 +191,12 @@ Key components:
 | Decision | Choice | Reasoning |
 |---|---|---|
 | Turn order | Urgency-based, not round-robin | Differentiator and emergent behavior |
-| Cross-agent awareness | Yes — each speaker sees prior speakers in this round | Enables real debate, not parallel monologues |
-| Round termination | Self-paused via urgency threshold | Prevents runaway costs while feeling natural |
+| Cross-agent awareness | Yes — each speaker sees prior speakers in this round and urgency recalibrates after each response | Enables real debate, not parallel monologues |
+| Round termination | Self-paused via urgency threshold, with temporary turn cap during MVP | Preserves the natural "room goes quiet" mechanic while giving early builds a safety fuse |
 | Persona work | Baked-in defaults for MVP, custom in stretch | Demo magic requires personas; building a persona editor is post-MVP |
 | Persistence | PostgreSQL via Prisma | Real relational persistence is part of the learning goal; Supabase Postgres is the likely hosted database |
 | Deploy | Stretch goal | Local + recorded video demo is acceptable fallback |
-| UI aesthetic | Minutes (document) not chat | Differentiation from every other AI app |
+| UI aesthetic | Live group conversation plus meeting-minutes export | Chat is the clearest interaction model for live discussion; minutes remain the durable artifact |
 
 ## Known Limitations & Future Work
 
@@ -208,7 +212,7 @@ Key components:
 Advisor = configured persona backed by a provider model
 Agent = runtime execution of an advisor during a turn
 Provider = LLM backend (Anthropic, OpenAI, Google, xAI)
-Round = one urgency cycle
+Round = the room's full response to one user message, ending when the room goes quiet
 Turn = one advisor speaking
 Conversation = one persisted discussion session
 Transcript = persistent meeting record
