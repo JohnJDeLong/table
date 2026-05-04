@@ -1,12 +1,241 @@
-// Prisma schema placeholder.
-// Block 6 will define the real data model for boardrooms, advisors,
-// conversations, messages, and transcript events.
+enum Provider {
+  anthropic
+  openai
+  gemini
+  grok
+}
+
+enum WorkspaceRole {
+  owner
+  admin
+  member
+  viewer
+}
+
+enum AdvisorOwnerType {
+  user
+  workspace
+}
+
+enum AdvisorVisibility {
+  private
+  workspace
+}
+
+enum ConversationStatus {
+  active
+  complete
+  archived
+  error
+}
+
+enum SpeakerType {
+  user
+  advisor
+}
+
+enum RoundEventType {
+  urgency_scores
+  speaker_start
+  token
+  speaker_end
+  round_end
+  turn_cap_reached
+  user_interrupt
+  error
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships     WorkspaceMember[]
+  advisorProfiles AdvisorProfile[]
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members         WorkspaceMember[]
+  advisorProfiles AdvisorProfile[]
+  boardrooms      Boardroom[]
+  conversations   Conversation[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(member)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model AdvisorProfile {
+  id                         String            @id @default(cuid())
+  ownerType                  AdvisorOwnerType
+  ownerUserId                String?
+  ownerWorkspaceId           String?
+  visibility                 AdvisorVisibility @default(private)
+  canCopy                    Boolean           @default(false)
+  displayName                String
+  description                String?
+  provider                   Provider
+  systemPrompt               String
+  ratingModel                String
+  responseModel              String
+  copiedFromAdvisorProfileId String?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+
+  ownerUser      User?      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerWorkspace Workspace? @relation(fields: [ownerWorkspaceId], references: [id], onDelete: Cascade)
+
+  copiedFrom     AdvisorProfile?    @relation("AdvisorProfileCopies", fields: [copiedFromAdvisorProfileId], references: [id])
+  copies         AdvisorProfile[]   @relation("AdvisorProfileCopies")
+  boardrooms     BoardroomAdvisor[]
+  urgencyRatings UrgencyRating[]
+  roundEvents    RoundEvent[]
+
+  @@index([ownerUserId])
+  @@index([ownerWorkspaceId])
+  @@index([provider])
+}
+
+model Boardroom {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  name             String
+  description      String?
+  pauseThreshold   Int      @default(3)
+  maxTurnsPerRound Int      @default(10)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  advisors      BoardroomAdvisor[]
+  conversations Conversation[]
+
+  @@index([workspaceId])
+}
+
+model BoardroomAdvisor {
+  id               String   @id @default(cuid())
+  boardroomId      String
+  advisorProfileId String
+  enabled          Boolean  @default(true)
+  position         Int
+  color            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  boardroom      Boardroom      @relation(fields: [boardroomId], references: [id], onDelete: Cascade)
+  advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([boardroomId, advisorProfileId])
+  @@index([advisorProfileId])
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  workspaceId   String
+  boardroomId   String
+  title         String?
+  initialPrompt String
+  status        ConversationStatus @default(active)
+  pauseReason   String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  boardroom Boardroom @relation(fields: [boardroomId], references: [id], onDelete: Cascade)
+
+  messages       Message[]
+  urgencyRatings UrgencyRating[]
+  roundEvents    RoundEvent[]
+
+  @@index([workspaceId])
+  @@index([boardroomId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  speakerType    SpeakerType
+  speakerId      String?
+  provider       Provider?
+  turnIndex      Int
+  content        String
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([speakerType])
+  @@index([turnIndex])
+}
+
+model UrgencyRating {
+  id               String   @id @default(cuid())
+  conversationId   String
+  advisorProfileId String?
+  advisorId        String
+  turnIndex        Int
+  urgency          Int
+  reason           String
+  createdAt        DateTime @default(now())
+
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  advisorProfile AdvisorProfile? @relation(fields: [advisorProfileId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([advisorProfileId])
+  @@index([advisorId])
+  @@index([turnIndex])
+}
+
+model RoundEvent {
+  id               String         @id @default(cuid())
+  conversationId   String
+  sequence         Int
+  type             RoundEventType
+  advisorProfileId String?
+  advisorId        String?
+  payload          Json
+  createdAt        DateTime       @default(now())
+
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  advisorProfile AdvisorProfile? @relation(fields: [advisorProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId])
+  @@index([advisorProfileId])
+  @@index([advisorId])
+  @@index([type])
+}
 
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../server/src/generated/prisma"
+  moduleFormat = "esm"
 }
+
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }

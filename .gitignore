@@ -8,6 +8,8 @@ dist/
 build/
 out/
 *.tsbuildinfo
+server/src/generated/prisma
+
 
 # Environment & secrets
 .env
