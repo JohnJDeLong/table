@@ -48,7 +48,7 @@ Determines whether the advisor should speak next given the current conversation.
 
 Input:
 
-- advisor persona prompt
+- advisor seat/system prompt
 - conversation transcript
 - prior responses from the current round, if any
 
@@ -70,18 +70,15 @@ Generates the advisor's contribution to the meeting transcript.
 
 Input:
 
-- advisor persona prompt
+- advisor seat/system prompt
 - conversation transcript
 - earlier responses from this round
 
 Output:
 
-Server-Sent Events token stream:
+Async text chunks consumed by the orchestrator.
 
-speaker_start
-token
-token
-speaker_end
+The orchestrator turns those chunks into Table SSE events such as `speaker_start`, `token`, and `speaker_end`.
 
 
 ## Adapter architecture
@@ -91,14 +88,10 @@ Each provider is implemented as an adapter module.
 Example:
 
 providers/
-  anthropic/
-    AnthropicAdapter.ts
-  openai/
-    OpenAIAdapter.ts
-  google/
-    GeminiAdapter.ts
-  xai/
-    GrokAdapter.ts
+  AnthropicAdapter.ts
+  OpenAIAdapter.ts
+  GeminiAdapter.ts
+  GrokAdapter.ts
 
 
 Each adapter:
@@ -136,7 +129,9 @@ OpenAI → delta token stream
 Gemini → chunked stream
 xAI → message-based stream
 
-Adapters normalize all responses into:
+Adapters normalize provider streams into async text chunks.
+
+The orchestrator wraps those chunks in Table events:
 
 speaker_start
 token
@@ -165,26 +160,16 @@ If needed:
 
 ## Model selection strategy
 
-Each provider may use different models for different jobs:
+Each provider may use different configured models for different jobs:
 
 Urgency scoring
 
-Lower-cost fast models:
-
-Claude Haiku
-GPT-4o-mini
-Gemini Flash
-Grok-mini
+Lower-cost fast models where available.
 
 
 Response generation
 
-Higher-quality reasoning models:
-
-Claude Sonnet
-GPT-4o
-Gemini Pro
-Grok flagship
+Higher-quality response models where useful.
 
 
 This keeps urgency checks fast and cheap while saving stronger models for full responses.
@@ -217,24 +202,21 @@ This lets the room keep going when one provider fails.
 
 ## Provider configuration
 
-Providers are registered at runtime.
+Provider-backed advisor seats are registered at runtime.
 
 Example:
 
-providers = [
-  AnthropicAdapter,
-  OpenAIAdapter,
-  GeminiAdapter,
-  GrokAdapter
+advisors = [
+  { id: "anthropic", provider: anthropicProvider, systemPrompt: "" },
+  { id: "openai", provider: openaiProvider, systemPrompt: "" }
 ]
 
 
-Boardrooms select advisors from available providers.
+MVP uses this runtime list directly. Saved boardrooms, custom advisor sets, and named personas are future features.
 
 This enables:
 
-- configurable advisor sets
-- provider experimentation
+- simple provider experimentation during MVP
 - fallback routing
 
 

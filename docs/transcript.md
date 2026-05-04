@@ -6,9 +6,7 @@ Source of truth: this file owns transcript and persistence vocabulary. The curre
 
 This document defines the transcript model used by Table.
 
-Transcripts are the persistent record of a boardroom session. They capture
-advisor participation, speaking order, urgency signals, and conversation
-progression across rounds.
+Transcripts are the persistent record of a Table conversation. They capture advisor participation, speaking order, urgency signals, Table round events, and conversation progression.
 
 Transcripts in Table are structured conversation records that reflect the orchestration protocol and can be rendered later as meeting minutes.
 
@@ -28,15 +26,16 @@ The transcript system should support:
 
 ## Transcript structure
 
-A transcript represents a single boardroom session.
+A transcript represents a single conversation. In the future product, that conversation belongs to a boardroom inside a workspace. For the MVP, conversations use seeded default workspace and boardroom records.
 
 Each transcript contains:
 
-- boardroom metadata
-- advisor configuration
-- ordered rounds
-- ordered turns within each round
-- system events
+- conversation metadata
+- workspace and boardroom references
+- advisor profile references
+- ordered messages
+- urgency ratings
+- Table round events
 - termination state
 
 
@@ -44,14 +43,9 @@ Example:
 
 Transcript
   metadata
-  advisors
-  rounds[]
-    urgency_scores
-    turns[]
-      speaker
-      provider
-      content
-      timestamp
+  messages[]
+  urgency_ratings[]
+  round_events[]
   termination_reason
 
 
@@ -63,9 +57,10 @@ Example:
 
 {
   conversationId: string,
+  workspaceId: string,
+  boardroomId: string,
   createdAt: timestamp,
-  updatedAt: timestamp,
-  boardroomId: string
+  updatedAt: timestamp
 }
 
 
@@ -74,60 +69,34 @@ Metadata allows transcripts to be:
 - resumed
 - indexed
 - filtered
-- grouped by boardroom
+- grouped by workspace and boardroom
 
 
 ## Terminology Mapping
 
-The product may describe a live discussion as a session, but the backend stores it as a `Conversation`. In the MVP database sketch, advisor turns are stored as `Message` rows.
+The product may describe a live discussion as a session, but the backend stores it as a `Conversation`. Advisor turns are stored as `Message` rows. Urgency decisions and clean Table event history are stored separately so the conversation can be debugged and replayed.
 
 Storage terms:
 
 - `Conversation` = one transcript/session
 - `Message` = one user entry, advisor turn, or persisted transcript block
-- `round_number` = the orchestration round for a message
-- `speaker_id` = the advisor id when the speaker is an advisor
+- `turn_index` = the speaking position within the conversation
+- `UrgencyRating` = one advisor's "should I speak next?" score and reason
+- `RoundEvent` = one normalized Table event emitted by the orchestrator
+- `speaker_id` = the advisor profile id or provider-backed id when the speaker is an advisor
 
 
-## Advisor registry snapshot
+## Advisor profile references
 
-Each transcript stores the advisor configuration used at runtime.
-
-Example:
-
-advisors: [
-  {
-    name: "Strategist",
-    provider: "anthropic",
-    model: "claude-sonnet"
-  }
-]
-
-
-This ensures transcripts remain reproducible even if provider defaults change later.
-
-
-## Round model
-
-Conversations are stored as ordered rounds.
-
-Each round contains:
-
-- urgency scores
-- ordered turns
-- round index
-
+Each transcript should preserve enough advisor identity to explain who spoke. The full reusable advisor configuration lives in `AdvisorProfile`; message and event rows reference advisor profile ids where available.
 
 Example:
 
-round: {
-  index: number,
-  urgencyScores: [],
-  turns: []
-}
+advisorProfileId: "..."
+advisorId: "anthropic"
+provider: "anthropic"
 
-
-Rounds reflect orchestration structure rather than message order alone.
+For MVP, the app seeds four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. Later, users and workspaces can create custom advisor profiles and boardrooms can include or exclude them.
 
 
 ## Urgency score storage
@@ -138,7 +107,8 @@ Example:
 
 urgencyScores: [
   {
-    advisor: "Strategist",
+    advisorId: "openai",
+    advisorProfileId: "...",
     score: 8,
     reason: "Needs to evaluate tradeoffs"
   }
@@ -152,37 +122,41 @@ This enables:
 - future analytics features
 
 
-## Turn model
+## Message model
 
-A turn represents a single advisor response.
+A message represents one user entry or one advisor response.
 
 Example:
 
-turn: {
-  advisor: string,
+message: {
+  speakerType: "advisor",
+  speakerId: string,
   provider: string,
-  roundIndex: number,
+  turnIndex: number,
   content: string,
   timestamp: number
 }
 
 
-Turns are always stored in speaking order.
+Messages are stored in speaking order.
 
 
 ## System events
 
-System events capture orchestration signals that affect conversation flow.
+Round events capture normalized Table orchestration signals that affect conversation flow.
 
 Examples:
 
-round_start
-room_quiet
+urgency_scores
+speaker_start
+token
+speaker_end
+round_end
 turn_cap_reached
-user_interrupt
+error
 
 
-These events allow transcripts to reflect why conversations stopped.
+These events are saved in Table's provider-independent event language, not raw Anthropic/OpenAI/Gemini/Grok SDK events. They allow transcripts to reflect why conversations stopped and let developers inspect the exact run timeline.
 
 
 ## Streaming integration
@@ -210,10 +184,10 @@ Each transcript records why the conversation ended.
 
 Possible values:
 
-room_quiet
+complete
 turn_cap_reached
+error
 user_interrupt
-session_complete
 
 
 Termination states allow deterministic replay and debugging.
@@ -225,17 +199,28 @@ MVP persistence uses Prisma with PostgreSQL.
 
 For local development, `DATABASE_URL` points to a Postgres database. For hosted deployment, the likely database is Supabase Postgres. The app does not plan to use localStorage as its main persistence layer.
 
+The schema is future-aware, but the MVP runtime uses seeded defaults:
 
-Possible relational structure:
+- default user
+- default workspace
+- default boardroom
+- four provider-backed advisor profiles
+- four boardroom advisor rows
 
+Relational structure:
+
+users
+workspaces
+workspace_members
+advisor_profiles
 boardrooms
+boardroom_advisors
 conversations
-rounds
 messages
-events
+urgency_ratings
+round_events
 
-
-This structure mirrors orchestration hierarchy.
+This structure supports future auth, workspaces, reusable personal advisors, workspace-owned advisors, boardroom composition, and current MVP trace persistence without requiring all those UI features now.
 
 
 ## Transcript rendering model
@@ -246,10 +231,10 @@ Example:
 
 [Round 2]
 
-Strategist (Anthropic):
+Anthropic advisor:
 We should evaluate long-term tradeoffs before committing.
 
-Engineer (OpenAI):
+OpenAI advisor:
 Implementation complexity is moderate.
 
 

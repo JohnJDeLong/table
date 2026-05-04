@@ -28,10 +28,13 @@ During a conversation cycle, the backend emits a structured sequence of events.
 
 Typical flow:
 
-round_start
 urgency_scores
 speaker_start
 token
+token
+speaker_end
+urgency_scores
+speaker_start
 token
 speaker_end
 round_end
@@ -49,9 +52,13 @@ Why SSE:
 - ordered message delivery
 - low infrastructure complexity
 
-SSE endpoint:
+Target SSE endpoint:
 
 POST /api/conversations/:id/messages
+
+Current MVP test endpoint:
+
+POST /api/round-test
 
 
 ## Event format
@@ -66,24 +73,14 @@ Example:
 
 event: speaker_start
 data: {
-  "advisorId": "advisor_strategist",
-  "provider": "anthropic",
-  "roundIndex": 2
+  "type": "speaker_start",
+  "advisorId": "anthropic",
+  "urgency": 7,
+  "reason": "I can add a useful implementation tradeoff."
 }
 
 
 ## Event types
-
-### round_start
-
-Signals the beginning of a new round.
-
-Payload:
-
-{
-  roundIndex: number
-}
-
 
 ### urgency_scores
 
@@ -92,6 +89,7 @@ Emitted after all advisors submit urgency ratings.
 Payload:
 
 {
+  type: "urgency_scores",
   scores: [
     {
       advisorId: string,
@@ -109,9 +107,10 @@ Signals that an advisor has begun responding.
 Payload:
 
 {
+  type: "speaker_start",
   advisorId: string,
-  provider: string,
-  roundIndex: number
+  urgency: number,
+  reason: string
 }
 
 
@@ -122,6 +121,7 @@ Streams partial response content.
 Payload:
 
 {
+  type: "token",
   advisorId: string,
   text: string
 }
@@ -134,8 +134,8 @@ Signals completion of an advisor response.
 Payload:
 
 {
-  advisorId: string,
-  roundIndex: number
+  type: "speaker_end",
+  advisorId: string
 }
 
 
@@ -146,20 +146,8 @@ Signals completion of a response round.
 Payload:
 
 {
-  roundIndex: number,
-  paused: boolean,
-  pauseReason: string
-}
-
-
-### room_quiet
-
-Signals that the urgency threshold has dropped below the continuation threshold.
-
-Payload:
-
-{
-  reason: "urgency_below_threshold"
+  type: "round_end",
+  spokenAdvisorIds: string[]
 }
 
 
@@ -170,6 +158,7 @@ Signals that the temporary maximum turn limit for the current round has been rea
 Payload:
 
 {
+  type: "turn_cap_reached",
   maxTurnsPerRound: number
 }
 
@@ -181,6 +170,7 @@ Signals that the user has interrupted the current round.
 Payload:
 
 {
+  type: "user_interrupt",
   reason: "user_interrupt"
 }
 
@@ -192,6 +182,7 @@ Signals a streaming or provider error.
 Payload:
 
 {
+  type: "error",
   message: string
 }
 
@@ -210,7 +201,6 @@ The backend guarantees:
 
 Example valid sequence:
 
-round_start
 urgency_scores
 speaker_start
 token
@@ -228,13 +218,12 @@ round_end
 
 The frontend event listener must:
 
-- create a new round container on round_start
 - display urgency indicators on urgency_scores
 - open a transcript block on speaker_start
 - append content on token
 - finalize advisor block on speaker_end
 - close round container on round_end
-- display pause state on room_quiet
+- infer the quiet state from round_end when no advisor remains above threshold
 
 
 ## Interruption handling
@@ -256,7 +245,6 @@ Frontend must:
 
 Example full session event flow:
 
-round_start
 urgency_scores
 speaker_start
 token
@@ -268,9 +256,6 @@ token
 speaker_end
 urgency_scores
 round_end
-round_start
-urgency_scores
-room_quiet
 
 
 ## Future extensions

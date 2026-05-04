@@ -11,13 +11,15 @@ The shippable, demo-ready version.
 - Temporary max turns per round as MVP safety net
 - User interrupt control
 - Clean group-conversation UI with meeting-minutes PDF export
-- 4 default advisors with hardcoded personas (one per provider, tuned to lean into each model's strengths)
-- Conversation persistence with PostgreSQL via Prisma
+- Provider-backed advisor seats for the active providers
+- Future-aware PostgreSQL schema for users, workspaces, boardrooms, advisor profiles, conversations, urgency ratings, and event traces
+- Seeded default user, workspace, boardroom, and four provider-backed advisors for MVP runtime
 - Local demo with recorded video
 
 ## Phase 2: Stretch (during MVP window if ahead, or post-bootcamp)
 
 - Custom user-defined personas (advisor editor)
+- Named default advisor personas
 - Multiple boardrooms (Career Council, Project Boardroom, etc.)
 - Deploy to public URL (Vercel + Render + Supabase Postgres)
 - @-mention to call on a specific advisor out of order

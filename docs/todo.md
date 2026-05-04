@@ -60,9 +60,11 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Install and configure Prisma
 - [ ] Use PostgreSQL as the persistence layer
 - [ ] Use Supabase Postgres for hosted database if deploying
-- [ ] Write Prisma schema for boardrooms, advisors, conversations, messages, and transcript events
+- [ ] Write future-aware Prisma schema for users, workspaces, boardrooms, advisor profiles, conversations, messages, urgency ratings, and round events
+- [ ] Seed default user, workspace, boardroom, and four provider-backed advisor profiles
 - [ ] Run the first migration
-- [ ] Save messages as they generate, load on app reload
+- [ ] Save conversations, messages, urgency ratings, and Table round events
+- [ ] Load a saved conversation on app reload
 - [ ] Commit
 
 ## Block 7: Conversation UI + Minutes export

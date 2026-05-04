@@ -5,7 +5,7 @@ Source of truth: this is the system map. Detailed protocol rules live in `orches
 ## Overview
 
 
-Table is a multi-provider, multi-agent decision workspace. Advisors speak in urgency order, continue round by round, and pause when the room has nothing important left to add or when the user intervenes.
+Table is a multi-provider, multi-agent decision workspace. Provider-backed advisors speak in urgency order, continue until the room has nothing important left to add, and pause when collective urgency drops below threshold or when the user intervenes.
 
 The system has three logical layers:
 
@@ -19,11 +19,11 @@ This is the core product mechanic. Every user message triggers a live urgency lo
 
 ### Step 1: Urgency Rating (parallel, fast, cheap)
 
-All advisors are called in parallel with a small prompt:
+All active provider-backed advisors are called in parallel with a small prompt:
 
-> "Rate your urgency to respond on a 1-10 scale. 10 means staying quiet would seriously hurt the conversation. 1 means you have nothing distinct to add. Reply only with JSON: { urgency: number, reason: string }."
+> "Rate how urgently you should speak next in the current conversation. 10 means staying quiet would seriously hurt the conversation. 0 means you have nothing distinct to add. Reply only with JSON: { urgency: number, reason: string }."
 
-Urgency rating uses each provider's *cheap* tier (e.g. claude-haiku, gpt-4o-mini, gemini-flash) since the response is a small JSON. Cost matters here because urgency is recalculated after each advisor response.
+Urgency rating should use each provider's fast/low-cost configured model where available, since the response is a small JSON. Cost matters here because urgency is recalculated after each advisor response.
 
 ### Step 2: Highest-Urgency Response
 
@@ -53,7 +53,7 @@ while (true):
       scores = parallel(rateUrgency(advisors, conversation_so_far))
 
       if max(scores) < pause_threshold:
-          emit("room_quiet")
+          emit("round_end")
           break
 
       speaker = highest_urgency(scores)
@@ -90,11 +90,14 @@ interface LLMProvider {
 }
 ```
 
-Adapter implementations:
+Current adapter implementations:
 
 - `AnthropicAdapter` — wraps `@anthropic-ai/sdk`
 - `OpenAIAdapter` — wraps `openai` SDK
-- `GeminiAdapter` — wraps `@google/generative-ai`
+
+Planned adapter implementations:
+
+- `GeminiAdapter` — wraps Google's Gemini API
 - `GrokAdapter` — wraps xAI's API (or Mistral fallback if Grok access is blocked)
 
 Each adapter handles its provider's quirks:
@@ -104,50 +107,118 @@ Each adapter handles its provider's quirks:
 - Error handling and retries
 - Token counting (for cost tracking)
 
-The orchestrator never knows or cares which provider is behind a given advisor. Adding a fifth provider in the future means writing one new adapter file.
+The orchestrator never knows or cares which provider SDK is behind a given advisor seat. Adding another provider means writing one new adapter file and adding it to the runtime advisor list.
 
 ## Data Model
 
+The database is designed for the future product shape — users, workspaces, reusable advisor profiles, boardrooms, conversations, and trace data — even though the MVP only uses a seeded default path. This avoids redesigning persistence when auth, team workspaces, custom advisors, and multiple boardrooms arrive later.
+
+MVP persistence is still for observability first: save what happened, why the room chose each speaker, and enough event history to debug or reload the conversation. The MVP does not need login, workspace management, boardroom editing, or advisor editing UI.
+
 ```
+User
+  id
+  email
+  display_name
+  created_at
+  updated_at
+
+Workspace
+  id
+  name
+  created_at
+  updated_at
+
+WorkspaceMember
+  id
+  workspace_id
+  user_id
+  role              "owner" | "admin" | "member" | "viewer"
+  created_at
+  updated_at
+
+AdvisorProfile
+  id
+  owner_type        "user" | "workspace"
+  owner_user_id     nullable
+  owner_workspace_id nullable
+  visibility        "private" | "workspace"
+  can_copy
+  display_name
+  description
+  provider          "anthropic" | "openai" | "gemini" | "grok"
+  system_prompt
+  rating_model
+  response_model
+  copied_from_advisor_profile_id nullable
+  created_at
+  updated_at
+
 Boardroom
   id
-  name              "Career Council"
+  workspace_id
+  name
   description
-  pause_threshold   3
-  max_turns_per_round  10
+  pause_threshold
+  max_turns_per_round
   created_at
+  updated_at
 
-Advisor
+BoardroomAdvisor
   id
   boardroom_id
-  name              "Marcus"
-  role              "CTO, pragmatic operator"
-  persona_prompt    "You push back hard on hype..."
-  provider          "anthropic" | "openai" | "google" | "xai"
-  model             flagship model identifier
-  rating_model      cheap model identifier for Phase 1
-  color             "#e74c3c"
-  position          ordering within the boardroom
+  advisor_profile_id
+  enabled
+  position
+  color
+  created_at
+  updated_at
 
 Conversation
   id
+  workspace_id
   boardroom_id
   title             auto-generated from first user message
+  initial_prompt
+  status            "running" | "complete" | "interrupted" | "turn_cap_reached" | "error"
+  pause_reason      nullable
   created_at
+  updated_at
 
 Message
   id
   conversation_id
   speaker_type      "user" | "advisor"
-  speaker_id        nullable, advisor_id when type="advisor"
-  round_number
-  urgency_score     nullable, populated for advisor messages
-  urgency_reason    nullable
+  speaker_id        nullable, advisor_profile_id or provider id when type="advisor"
+  provider          nullable, "anthropic" | "openai" | "gemini" | "grok"
+  turn_index
   content
+  created_at
+
+UrgencyRating
+  id
+  conversation_id
+  advisor_profile_id nullable
+  advisor_id        provider-backed fallback id for MVP
+  turn_index
+  urgency
+  reason
+  created_at
+
+RoundEvent
+  id
+  conversation_id
+  sequence
+  type              "urgency_scores" | "speaker_start" | "token" | "speaker_end" | "round_end" | "turn_cap_reached" | "user_interrupt" | "error"
+  advisor_profile_id nullable
+  advisor_id        nullable, provider-backed fallback id for MVP
+  payload           JSON
   created_at
 ```
 
-For MVP, advisors are created from a hardcoded set of 4 defaults (one per provider). Custom advisor creation is a stretch feature.
+For MVP, seed a default user, default workspace, default boardroom, and four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. The app can use those defaults without exposing auth, workspace, boardroom, or advisor-management UI yet.
+
+Advisor profiles may be owned by a user or by a workspace. Personal advisors are private by default. Workspace advisors are visible to workspace members and editable according to workspace permissions. A workspace advisor can later be copied into a user's personal advisor library by creating a new user-owned `AdvisorProfile` that references `copied_from_advisor_profile_id`.
 
 ## API Surface
 
@@ -155,21 +226,19 @@ The exact SSE payloads are defined in `events.md`.
 
 Backend exposes:
 
-- `POST /api/conversations` — start a new conversation in a boardroom
-- `GET /api/conversations/:id` — fetch full conversation history
+- `POST /api/conversations` — start a new conversation in the default or selected boardroom
+- `GET /api/conversations/:id` — fetch full conversation history and trace data
 - `POST /api/conversations/:id/messages` — user sends a message; opens an SSE stream emitting round events
 - `POST /api/conversations/:id/interrupt` — user interrupts the current round
-- `GET /api/boardrooms` — list boardrooms
-- `GET /api/boardrooms/:id` — fetch boardroom + advisors
 
 The SSE stream from `POST /api/conversations/:id/messages` emits typed events:
 
-- `round_start` — `{ roundIndex }`
 - `urgency_scores` — `{ scores: [{ advisorId, urgency, reason }] }`
 - `speaker_start` — `{ advisorId }`
 - `token` — `{ advisorId, text }`
 - `speaker_end` — `{ advisorId }`
-- `round_end` — `{ roundIndex, paused: boolean, pauseReason: string }`
+- `turn_cap_reached` — `{ maxTurnsPerRound }`
+- `round_end` — `{ spokenAdvisorIds }`
 - `error` — `{ message }`
 
 ## Frontend Structure
@@ -184,7 +253,7 @@ Key components:
 - `RoundIndicator` — tells the user which round and whether the room paused
 - `ComposerBar` — input field with pause/interrupt controls
 - `MinutesExport` — generate/download a meeting-minutes PDF from the finished discussion
-- `BoardroomSidebar` — switch between boardrooms (stretch)
+- `ConversationHistory` — reload previous conversations once persistence is available
 
 ## Key Trade-offs and Decisions
 
@@ -193,7 +262,7 @@ Key components:
 | Turn order | Urgency-based, not round-robin | Differentiator and emergent behavior |
 | Cross-agent awareness | Yes — each speaker sees prior speakers in this round and urgency recalibrates after each response | Enables real debate, not parallel monologues |
 | Round termination | Self-paused via urgency threshold, with temporary turn cap during MVP | Preserves the natural "room goes quiet" mechanic while giving early builds a safety fuse |
-| Persona work | Baked-in defaults for MVP, custom in stretch | Demo magic requires personas; building a persona editor is post-MVP |
+| Advisor identity | Seeded provider-backed advisor profiles for MVP; custom advisors later | Keeps the MVP focused on the urgency mechanic while preserving the future persona/boardroom model |
 | Persistence | PostgreSQL via Prisma | Real relational persistence is part of the learning goal; Supabase Postgres is the likely hosted database |
 | Deploy | Stretch goal | Local + recorded video demo is acceptable fallback |
 | UI aesthetic | Live group conversation plus meeting-minutes export | Chat is the clearest interaction model for live discussion; minutes remain the durable artifact |
@@ -209,7 +278,10 @@ Key components:
 
 ## Terminology
 
-Advisor = configured persona backed by a provider model
+AdvisorProfile = reusable advisor/persona configuration, owned by a user or workspace
+Boardroom = saved room setup that chooses which advisor profiles participate
+BoardroomAdvisor = join record that includes/excludes advisor profiles in a boardroom
+Advisor = runtime participant selected from the active boardroom's advisor profiles
 Agent = runtime execution of an advisor during a turn
 Provider = LLM backend (Anthropic, OpenAI, Google, xAI)
 Round = the room's full response to one user message, ending when the room goes quiet
