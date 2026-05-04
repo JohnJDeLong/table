@@ -46,14 +46,12 @@ Table implements:
 
 ## Why this exists
 
-Different foundation models reason differently:
+ Models reason differently:
 
 Claude —   
 GPT —   
 Gemini —   
 Grok   -
-
-Most AI tools hide that by giving you one model at a time.
 
 Table treats those differences as value.
 
@@ -78,10 +76,6 @@ Their disagreements and discussion create better results.
 **Streaming**
 - Server-Sent Events
 
-
-## Status
-
-Pre-development. Currently in the docs-and-architecture phase before code starts.
 
 
 ## Project structure
