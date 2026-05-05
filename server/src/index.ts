@@ -6,8 +6,14 @@ import { AnthropicAdapter } from "./providers/AnthropicAdapter.js";
 import { OpenAIAdapter } from "./providers/OpenAIAdapter.js";
 import type { LLMProvider, ProviderMessage } from "./providers/types.js";
 import { rankAdvisorsByUrgency, type Advisor } from "./orchestrator/rankAdvisorsByUrgency.js";
-import { runAdvisorRound } from "./orchestrator/runAdvisorRound.js";
+import { runAdvisorRound, type RoundEvent } from "./orchestrator/runAdvisorRound.js";
 import { prisma } from "./config/prisma.js"
+import { Provider } from "./generated/prisma/enums.js";
+import type { Prisma } from "./generated/prisma/client.js";
+import { createConversation } from "./transcripts/createConversation.js";
+import { saveAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
+import { saveRoundEvent } from "./events/saveRoundEvent.js";
+
 
 dotenv.config({ path: '../.env' }); 
 
@@ -24,14 +30,20 @@ const advisors: Advisor[] = [
   {
     id: "anthropic",
     provider: anthropicProvider,
+    dbProvider: Provider.anthropic,
     systemPrompt: "",
   },
   {
     id: "openai",
     provider: openaiProvider,
+    dbProvider: Provider.openai,
     systemPrompt: "",
   },
 ];
+
+function getRoundEventPayload(event:RoundEvent): Prisma.InputJsonValue {
+  return event as Prisma.InputJsonValue;
+}
 
 
 function sendSse(res: Response, event: string, data: unknown) {
@@ -46,12 +58,16 @@ app.get("/api/health", (_req, res) => {
 //smoke test route 
 app.get("/api/db-test", async (_req, res) => {
   try {
-    const [userCount, workspaceCount, boardroomCount, advisorCount] =
+    const [userCount, workspaceCount, boardroomCount, advisorCount, conversationCount, messageCount, roundEventCount] =
       await Promise.all([
         prisma.user.count(),
         prisma.workspace.count(),
         prisma.boardroom.count(),
         prisma.advisorProfile.count(),
+        prisma.conversation.count(),
+        prisma.message.count(),
+        prisma.roundEvent.count(),
+
       ]);
 
     res.json({
@@ -60,6 +76,9 @@ app.get("/api/db-test", async (_req, res) => {
       workspaceCount,
       boardroomCount,
       advisorCount,
+      conversationCount,
+      messageCount,
+      roundEventCount,
     });
   } catch (error) {
     console.error(error);
@@ -98,6 +117,7 @@ app.post("/api/round-test", async (req, res) => {
         ? req.body.prompt
         : "Start a short advisor round.";
 
+    const savedConversation = await createConversation(prompt);
     const conversation: ProviderMessage[] = [{ role: "user", content: prompt }];
 
     res.setHeader("Content-Type", "text/event-stream");
@@ -105,11 +125,48 @@ app.post("/api/round-test", async (req, res) => {
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
+    let sequence = 0; 
+    let turnIndex = 1; 
+    const responseTextByAdvisor = new Map<string, string>(); 
+
     for await (const event of runAdvisorRound(advisors, conversation, {
       speakingThreshold: 3,
       maxTurnsPerRound: 10,
     })) {
       sendSse(res, event.type, event);
+      await saveRoundEvent({
+        conversationId: savedConversation.id,
+        sequence,
+        type: event.type,
+        advisorId: "advisorId" in event ? event.advisorId : undefined, 
+        payload: getRoundEventPayload(event),
+      });
+
+      sequence += 1; 
+
+      if (event.type === 'token') {
+        responseTextByAdvisor.set(
+          event.advisorId,
+          `${responseTextByAdvisor.get(event.advisorId) ?? ""}${event.text}`
+        );
+      }
+
+      if (event.type === "speaker_end") {
+        const advisor = advisors.find((candidate) => candidate.id === event.advisorId);
+        const content = responseTextByAdvisor.get(event.advisorId) ?? ""; 
+
+        if (advisor && content.trim().length > 0) {
+          await saveAdvisorMessage({
+            conversationId: savedConversation.id,
+            advisorId: event.advisorId, 
+            provider: advisor.dbProvider,
+            turnIndex,
+            content,
+          });
+          turnIndex += 1; 
+          responseTextByAdvisor.delete(event.advisorId);
+        }
+      }
     }
 
     res.end();
