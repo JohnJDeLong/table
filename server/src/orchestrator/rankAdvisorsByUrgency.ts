@@ -1,9 +1,10 @@
 import type { LLMProvider, ProviderMessage, UrgencyRating, } from "../providers/types.js";
-
+import type { Provider } from "../generated/prisma/enums.js"
 export type Advisor = {
   id: string;
   provider: LLMProvider;
   systemPrompt: string;
+  dbProvider: Provider; 
 };
 
 export type AdvisorUrgencyRating = UrgencyRating & {
