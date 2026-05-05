@@ -13,6 +13,7 @@ import type { Prisma } from "./generated/prisma/client.js";
 import { createConversation } from "./transcripts/createConversation.js";
 import { saveAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
 import { saveRoundEvent } from "./events/saveRoundEvent.js";
+import { loadBoardroomAdvisors } from "./orchestrator/loadBoardroomAdvisors.js";
 
 
 dotenv.config({ path: '../.env' }); 
@@ -26,20 +27,7 @@ app.use(express.json())
 const anthropicProvider = new AnthropicAdapter(process.env.ANTHROPIC_API_KEY);
 const openaiProvider = new OpenAIAdapter(process.env.OPENAI_API_KEY);
 
-const advisors: Advisor[] = [
-  {
-    id: "anthropic",
-    provider: anthropicProvider,
-    dbProvider: Provider.anthropic,
-    systemPrompt: "",
-  },
-  {
-    id: "openai",
-    provider: openaiProvider,
-    dbProvider: Provider.openai,
-    systemPrompt: "",
-  },
-];
+
 
 function getRoundEventPayload(event:RoundEvent): Prisma.InputJsonValue {
   return event as Prisma.InputJsonValue;
@@ -97,6 +85,8 @@ app.post("/api/urgency-test", async (req, res) => {
     const conversation: ProviderMessage[] = Array.isArray(req.body.conversation)
       ? req.body.conversation
       : [{ role: "user", content: prompt }];
+    
+    const advisors = await loadBoardroomAdvisors(); 
 
     const ratings = await rankAdvisorsByUrgency(advisors, conversation);
 
@@ -127,7 +117,10 @@ app.post("/api/round-test", async (req, res) => {
 
     let sequence = 0; 
     let turnIndex = 1; 
-    const responseTextByAdvisor = new Map<string, string>(); 
+    const responseTextByAdvisor = new Map<string, string>();
+    
+    const advisors = await loadBoardroomAdvisors(); 
+
 
     for await (const event of runAdvisorRound(advisors, conversation, {
       speakingThreshold: 3,
