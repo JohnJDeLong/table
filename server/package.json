@@ -6,7 +6,8 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "echo \"No tests yet\""
+    "test": "echo \"No tests yet\"",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
