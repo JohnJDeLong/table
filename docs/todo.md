@@ -77,6 +77,14 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Export/download finished discussion as a meeting-minutes PDF
 - [ ] Commit
 
+## Block 7.5: DB-backed boardroom runtime
+
+- [ ] Load enabled advisors from the seeded default boardroom
+- [ ] Convert `AdvisorProfile` rows into runtime `Advisor` objects
+- [ ] Keep unsupported providers disabled until their adapters exist
+- [ ] Remove the hardcoded advisor list from `server/src/index.ts`
+- [ ] Commit
+
 ## Block 8: 3rd provider + auto-pause logic
 
 - [ ] Add Gemini adapter
