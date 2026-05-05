@@ -44,17 +44,29 @@ app.get("/api/health", (_req, res) => {
 });
 
 //smoke test route 
-app.get("/api/db-test", async(_req, res) => {
-  try{
-    const userCount = await prisma.user.count();
+app.get("/api/db-test", async (_req, res) => {
+  try {
+    const [userCount, workspaceCount, boardroomCount, advisorCount] =
+      await Promise.all([
+        prisma.user.count(),
+        prisma.workspace.count(),
+        prisma.boardroom.count(),
+        prisma.advisorProfile.count(),
+      ]);
 
-    res.json({ ok: true, userCount }); 
-  }catch (error) {
+    res.json({
+      ok: true,
+      userCount,
+      workspaceCount,
+      boardroomCount,
+      advisorCount,
+    });
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to query database"}); 
+    res.status(500).json({ error: "Failed to query database" });
   }
-
 });
+
 
 app.post("/api/urgency-test", async (req, res) => {
   try {
