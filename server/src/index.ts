@@ -7,8 +7,7 @@ import { OpenAIAdapter } from "./providers/OpenAIAdapter.js";
 import type { LLMProvider, ProviderMessage } from "./providers/types.js";
 import { rankAdvisorsByUrgency, type Advisor } from "./orchestrator/rankAdvisorsByUrgency.js";
 import { runAdvisorRound } from "./orchestrator/runAdvisorRound.js";
-
-
+import { prisma } from "./config/prisma.js"
 
 dotenv.config({ path: '../.env' }); 
 
@@ -42,6 +41,19 @@ function sendSse(res: Response, event: string, data: unknown) {
 
 app.get("/api/health", (_req, res) => {
     res.json({ ok: true}); 
+});
+
+//smoke test route 
+app.get("/api/db-test", async(_req, res) => {
+  try{
+    const userCount = await prisma.user.count();
+
+    res.json({ ok: true, userCount }); 
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to query database"}); 
+  }
+
 });
 
 app.post("/api/urgency-test", async (req, res) => {
