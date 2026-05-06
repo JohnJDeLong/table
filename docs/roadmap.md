@@ -10,7 +10,7 @@ The shippable, demo-ready version.
 - Auto-pause when urgency drops below threshold
 - Temporary max turns per round as MVP safety net
 - User interrupt control
-- Clean group-conversation UI with meeting-minutes PDF export
+- Chat-like live conversation UI with meeting-minutes PDF export
 - Provider-backed advisor seats for the active providers
 - Future-aware PostgreSQL schema for users, workspaces, boardrooms, advisor profiles, conversations, urgency ratings, and event traces
 - Seeded default user, workspace, boardroom, and four provider-backed advisors for MVP runtime
@@ -42,6 +42,6 @@ If the MVP slips, drop in this order:
 1. **Deploy** → record local demo video instead
 2. **Hosted database** → run Postgres locally for demo if Supabase/deploy slips
 3. **4th provider** → ship with 3
-4. **Polish on conversation UI / PDF export** → ship with functional but unstyled UI
+4. **Polish on chat-like conversation UI / PDF export** → ship with functional but unstyled UI
 
 Do **not** cut: the urgency mechanic, cross-agent context awareness, or the ability to turn the discussion into meeting minutes.

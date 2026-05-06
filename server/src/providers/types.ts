@@ -9,7 +9,11 @@ export type ProviderMessage = {
   content: string;
 };
 
+export type ProviderCallOptions = { 
+  signal?: AbortSignal;
+}
+
 export interface LLMProvider {
-  rateUrgency(systemPrompt: string, conversation: ProviderMessage[]): Promise<UrgencyRating>;
-  streamResponse(systemPrompt: string,conversation: ProviderMessage[]): AsyncIterable<string>;
+  rateUrgency(systemPrompt: string, conversation: ProviderMessage[], options?: ProviderCallOptions): Promise<UrgencyRating>;
+  streamResponse(systemPrompt: string,conversation: ProviderMessage[], options?: ProviderCallOptions): AsyncIterable<string>;
 }

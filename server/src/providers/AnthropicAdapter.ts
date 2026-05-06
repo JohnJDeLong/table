@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { LLMProvider, ProviderMessage, UrgencyRating } from "./types.js";
+import type { LLMProvider, ProviderMessage, UrgencyRating, ProviderCallOptions } from "./types.js";
 import { parseUrgencyRating } from "./parseUrgencyRating.js";
 
 
@@ -11,7 +11,7 @@ export class AnthropicAdapter implements LLMProvider {
             apiKey,
         });
     }
-    async rateUrgency(systemPrompt: string, conversation: ProviderMessage[]): Promise<UrgencyRating> {
+    async rateUrgency(systemPrompt: string, conversation: ProviderMessage[], options?: ProviderCallOptions): Promise<UrgencyRating> {
         const urgencyPrompt = [systemPrompt,
             `You are the Anthropic advisor in a room with other AI advisors and a human user.
 
@@ -37,12 +37,17 @@ export class AnthropicAdapter implements LLMProvider {
             .filter(Boolean)
             .join("\n\n")
 
-        const message = await this.client.messages.create({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 200,
-            system: urgencyPrompt,
-            messages: conversation,
-        });
+        const message = await this.client.messages.create(
+            {
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 200,
+                system: urgencyPrompt,
+                messages: conversation,
+            },
+            {
+                signal: options?.signal,
+            }
+        );
 
         const text = message.content
             .map((block) => (block.type === "text" ? block.text : ""))
@@ -52,13 +57,19 @@ export class AnthropicAdapter implements LLMProvider {
         return parseUrgencyRating(text); 
     }
 
-    async *streamResponse(_systemPrompt: string, conversation: ProviderMessage[]): AsyncIterable<string> {
-        const stream = await this.client.messages.create({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens:300, 
-            messages: conversation,
-            stream: true, 
-        });
+    async *streamResponse(_systemPrompt: string, conversation: ProviderMessage[], options?: ProviderCallOptions): AsyncIterable<string> {
+        const stream = await this.client.messages.create(
+            {
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 300,
+                messages: conversation,
+                stream: true,
+            },
+            {
+                signal: options?.signal,
+            }
+        );
+
         for await (const event of stream ) {
             if( event.type === "content_block_delta" && event.delta.type === "text_delta") { 
                 yield event.delta.text;

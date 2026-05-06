@@ -14,7 +14,8 @@ import { createConversation } from "./transcripts/createConversation.js";
 import { saveAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
 import { saveRoundEvent } from "./events/saveRoundEvent.js";
 import { loadBoardroomAdvisors } from "./orchestrator/loadBoardroomAdvisors.js";
-
+import { saveUserMessage } from "./transcripts/saveUserMessage.js";
+import { loadProviderConversation } from "./transcripts/loadProviderConversation.js";
 
 dotenv.config({ path: '../.env' }); 
 
@@ -27,6 +28,7 @@ app.use(express.json())
 const anthropicProvider = new AnthropicAdapter(process.env.ANTHROPIC_API_KEY);
 const openaiProvider = new OpenAIAdapter(process.env.OPENAI_API_KEY);
 
+const activeRoundControllers = new Map<string, AbortController>();
 
 
 function getRoundEventPayload(event:RoundEvent): Prisma.InputJsonValue {
@@ -100,23 +102,95 @@ app.post("/api/urgency-test", async (req, res) => {
 });
 
 
+app.post("/api/conversations/:conversationId/stop", (req, res) => {
+  const controller = activeRoundControllers.get(req.params.conversationId);
+
+  if (!controller) {
+    res.json({ ok: true, stopped: false });
+    return;
+  }
+
+  controller?.abort();
+  activeRoundControllers.delete(req.params.conversationId);
+
+  res.json({ ok: true, stopped: true });
+});
+
+
 app.post("/api/round-test", async (req, res) => {
+  let clientDisconnected = false; 
+  let activeConversationId: string | null = null;
+
+  res.on("close", ()=> {clientDisconnected = true });
+
   try {
+    
     const prompt =
       typeof req.body.prompt === "string" && req.body.prompt.trim().length > 0
         ? req.body.prompt
         : "Start a short advisor round.";
 
-    const savedConversation = await createConversation(prompt);
-    const conversation: ProviderMessage[] = [{ role: "user", content: prompt }];
+    const requestedConversationId = typeof req.body.conversationId === "string" && req.body.conversationId.length > 0
+      ? req.body.conversationId
+      : null;
+
+    let savedConversation; 
+
+    if (requestedConversationId) {
+      savedConversation = await prisma.conversation.findUnique({
+        where: { id: requestedConversationId},
+      });
+
+      if(!savedConversation) {
+        res.status(404).json({ error: "Conversation not found" }); 
+        return; 
+      }
+
+      const latestMessage = await prisma.message.findFirst({
+        where: { conversationId: savedConversation.id },
+        orderBy: { turnIndex: "desc"},
+        select: { turnIndex: true }, 
+      });
+
+      await saveUserMessage({
+        conversationId: savedConversation.id, 
+        turnIndex: (latestMessage?.turnIndex ?? -1) + 1, 
+        content: prompt,
+
+      });
+    } else{
+      savedConversation = await createConversation(prompt);
+    }
+
+    activeConversationId = savedConversation.id;
+
+    const roundController = new AbortController();
+    activeRoundControllers.set(savedConversation.id, roundController);
+    const conversation = await loadProviderConversation(savedConversation.id);
+    
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
-    let sequence = 0; 
-    let turnIndex = 1; 
+    sendSse(res, "conversation_ready", { conversationId: savedConversation.id });
+
+    const latestRoundEvent = await prisma.roundEvent.findFirst({
+      where: { conversationId: savedConversation.id },
+      orderBy: { sequence: "desc" },
+      select: { sequence: true },
+    });
+
+    const latestMessage = await prisma.message.findFirst({
+      where: { conversationId: savedConversation.id },
+      orderBy: { turnIndex: "desc" },
+      select: { turnIndex: true },
+    });
+
+    let sequence = (latestRoundEvent?.sequence ?? -1) + 1;
+    let turnIndex = (latestMessage?.turnIndex ?? -1) + 1;
+
     const responseTextByAdvisor = new Map<string, string>();
     
     const advisors = await loadBoardroomAdvisors(); 
@@ -125,8 +199,13 @@ app.post("/api/round-test", async (req, res) => {
     for await (const event of runAdvisorRound(advisors, conversation, {
       speakingThreshold: 3,
       maxTurnsPerRound: 10,
+      signal: roundController.signal, 
     })) {
+      if (roundController.signal.aborted || clientDisconnected || res.destroyed || res.writableEnded) {
+        break; 
+      }
       sendSse(res, event.type, event);
+
       await saveRoundEvent({
         conversationId: savedConversation.id,
         sequence,
@@ -162,9 +241,15 @@ app.post("/api/round-test", async (req, res) => {
       }
     }
 
-    res.end();
+    if (!clientDisconnected && !res.writableEnded) {
+      res.end();
+    }
   } catch (error) {
     console.error(error);
+
+    if (clientDisconnected || res.destroyed || res.writableEnded) {
+      return;
+    }
 
     if (!res.headersSent) {
       res.status(500).json({ error: "Failed to run advisor round" });
@@ -173,6 +258,10 @@ app.post("/api/round-test", async (req, res) => {
 
     sendSse(res, "error", { message: "Failed to run advisor round" });
     res.end();
+  } finally {
+    if (activeConversationId) {
+      activeRoundControllers.delete(activeConversationId);
+    }
   }
 });
 

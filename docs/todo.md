@@ -47,7 +47,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] UI: show "show of hands" badges with scores + reasons
 - [x] Commit
 
-## Block 5: Sequential responses with cross-context (Phase 2) — In Progress
+## Block 5: Sequential responses with cross-context (Phase 2) — Complete
 
 - [x] Orchestrator: after each advisor response, recalibrate urgency before selecting the next speaker
 - [x] Each advisor sees the full transcript including prior speakers in this round
@@ -55,71 +55,112 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] UI: render each advisor's response in sequence
 - [x] Commit
 
-## Block 6: Persistence
+## Block 6: Persistence — Complete
 
-- [ ] Install and configure Prisma
-- [ ] Use PostgreSQL as the persistence layer
-- [ ] Use Supabase Postgres for hosted database if deploying
-- [ ] Write future-aware Prisma schema for users, workspaces, boardrooms, advisor profiles, conversations, messages, urgency ratings, and round events
-- [ ] Seed default user, workspace, boardroom, and four provider-backed advisor profiles
-- [ ] Run the first migration
-- [ ] Save conversations, messages, urgency ratings, and Table round events
-- [ ] Load a saved conversation on app reload
-- [ ] Commit
+- [x] Install and configure Prisma
+- [x] Use PostgreSQL as the persistence layer
+- [x] Use Supabase Postgres for hosted database
+- [x] Write future-aware Prisma schema for users, workspaces, boardrooms, advisor profiles, conversations, messages, urgency ratings, and round events
+- [x] Seed default user, workspace, boardroom, and four provider-backed advisor profiles
+- [x] Run the first migration
+- [x] Save conversations, messages, and Table round events
+- [x] Capture urgency scores in persisted round event payloads
+- [x] Commit
+
+## Block 7.5: DB-backed boardroom runtime — Complete
+
+- [x] Load enabled advisors from the seeded default boardroom
+- [x] Convert `AdvisorProfile` rows into runtime `Advisor` objects
+- [x] Keep unsupported providers disabled until their adapters exist
+- [x] Remove the hardcoded advisor list from `server/src/index.ts`
+- [x] Commit
 
 ## Block 7: Conversation UI + Minutes export
 
-- [ ] Clean group-chat layout for the live advisor discussion
-- [ ] Speaker labels with role and color accent
-- [ ] Round indicator
+- [x] Chat-like live room for the advisor discussion
+- [x] Bottom composer for sending the next user message
+- [x] Speaker labels with role and color accent
+- [x] Sidebar shape for workspaces, boardrooms, advisor standing, settings, and profile
+- [x] Message stream that feels familiar like texting while staying focused on decision work
+- [x] Auto-scroll to newest message
+- [x] Continue the current backend conversation when the user sends follow-up prompts
 - [ ] Pause / interrupt button always visible
-- [ ] Visual treatment that keeps the conversation focused and work-like, not social
 - [ ] Export/download finished discussion as a meeting-minutes PDF
 - [ ] Commit
 
-## Block 7.5: DB-backed boardroom runtime
+## Block 8: Add Gemini provider
 
-- [ ] Load enabled advisors from the seeded default boardroom
-- [ ] Convert `AdvisorProfile` rows into runtime `Advisor` objects
-- [ ] Keep unsupported providers disabled until their adapters exist
-- [ ] Remove the hardcoded advisor list from `server/src/index.ts`
+- [ ] Get Google AI Studio key and add it to local `.env`
+- [ ] Add Gemini key placeholder to `.env.example`
+- [ ] Verify current Gemini model identifiers before hardcoding them
+- [ ] Install the Google/Gemini SDK
+- [ ] Add `GeminiAdapter` behind the existing `LLMProvider` interface
+- [ ] Wire Gemini into `loadBoardroomAdvisors`
+- [ ] Enable Gemini in the default boardroom once the adapter works
+- [ ] Test `/api/urgency-test` and `/api/round-test` with Gemini active
 - [ ] Commit
 
-## Block 8: 3rd provider + auto-pause logic
+## Block 9: Add Grok or fallback provider
 
-- [ ] Add Gemini adapter
-- [ ] Implement multi-round loop with urgency-threshold pause
-- [ ] Add temporary max turns per round safety cap
-- [ ] UI: "the room has gone quiet" state
+- [ ] Apply for xAI / Grok API access
+- [ ] If xAI access is blocked, choose fallback provider and note it in `agents.local.md`
+- [ ] Add provider key placeholder to `.env.example`
+- [ ] Verify current model identifiers before hardcoding them
+- [ ] Install the provider SDK
+- [ ] Add the provider adapter behind the existing `LLMProvider` interface
+- [ ] Wire the provider into `loadBoardroomAdvisors`
+- [ ] Enable the provider in the default boardroom once the adapter works
+- [ ] Test `/api/urgency-test` and `/api/round-test` with all active providers
 - [ ] Commit
 
-## Block 9: Buffer / catch-up + start 4th provider
+## Block 10: All-provider end-to-end + conversation hygiene
 
-- [ ] Catch up on anything slipped from previous blocks
-- [ ] Add Grok adapter (or fallback)
+- [ ] Confirm active providers participate through the database-backed boardroom runtime
+- [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
+- [ ] Load a saved conversation on app reload
+- [ ] Add conversation deletion so removing a conversation also cleans up its messages, urgency ratings, and round events
+- [ ] Decide whether separate `UrgencyRating` rows are needed beyond persisted round event payloads
 - [ ] Commit
 
-## Block 10: Default personas + first end-to-end test
+## Block 11: Auth, users, and profile foundation
 
-- [ ] Write 4 hardcoded persona prompts (one per advisor, leaning into each model's strengths)
-- [ ] Seed a default boardroom with these advisors
-- [ ] Run a full end-to-end conversation. Note bugs.
+- [ ] Choose managed auth path for the MVP
+- [ ] Add login page
+- [ ] Add logout behavior
+- [ ] Map authenticated users to `User` records
+- [ ] Enforce workspace membership with `WorkspaceMember`
+- [ ] Add basic profile view/edit behavior
 - [ ] Commit
 
-## Block 11: Bug fixes + polish
+## Block 12: Real workspace, boardroom, and advisor controls
 
-- [ ] Fix bugs from Block 10
+- [ ] Load sidebar workspaces, boardrooms, and advisors from the API instead of hardcoding them
+- [ ] Add real behavior for workspace `+`
+- [ ] Add real behavior for boardroom `+`
+- [ ] Add real behavior for advisor `+`
+- [ ] Add basic edit/delete behavior where needed
+- [ ] Commit
+
+## Block 13: Custom advisor/persona builder
+
+- [ ] Design the custom advisor/persona prompt builder
+- [ ] Let users create user-owned advisor profiles
+- [ ] Let users edit their own advisor prompts/config
+- [ ] Let users add or remove their advisors from boardrooms
+- [ ] Keep workspace-owned advisors visible but permission-controlled
+- [ ] Commit
+
+## Block 14: Bug fixes, polish, README, and demo
+
+- [ ] Fix bugs from Blocks 8-13
 - [ ] UI polish pass
-- [ ] Improve persona prompts based on real outputs
-- [ ] Commit
-
-## Block 12: README polish + demo recording
-
+- [ ] Improve shared advisor prompts based on real outputs if needed
 - [ ] Update README quick-start section with real instructions
 - [ ] Record demo video (60-90 seconds, the magic moment)
 - [ ] Tag a release commit
 
-## Buffer (Blocks 13-14 if needed)
+## Stretch / Parking Lot
 
-- [ ] Reserved for slippage
-- [ ] If on schedule: tackle one stretch goal (deploy, custom personas, or @-mentions)
+- [ ] Deploy to a public URL
+- [ ] Add @-mention to call on a specific advisor out of order
+- [ ] Add custom boardroom templates
