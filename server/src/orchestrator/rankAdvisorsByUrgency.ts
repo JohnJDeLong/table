@@ -1,4 +1,4 @@
-import type { LLMProvider, ProviderMessage, UrgencyRating, } from "../providers/types.js";
+import type { LLMProvider, ProviderMessage, UrgencyRating, ProviderCallOptions } from "../providers/types.js";
 import type { Provider } from "../generated/prisma/enums.js"
 export type Advisor = {
   id: string;
@@ -11,12 +11,13 @@ export type AdvisorUrgencyRating = UrgencyRating & {
   advisorId: string;
 };
 
-export async function rankAdvisorsByUrgency(advisors: Advisor[], conversation: ProviderMessage[]): Promise<AdvisorUrgencyRating[]> {
+export async function rankAdvisorsByUrgency(advisors: Advisor[], conversation: ProviderMessage[], options?: ProviderCallOptions): Promise<AdvisorUrgencyRating[]> {
   const ratingsWithOrder = await Promise.all(
     advisors.map(async (advisor, order) => {
       const rating = await advisor.provider.rateUrgency(
         advisor.systemPrompt,
-        conversation
+        conversation,
+        options
       );
 
       return {

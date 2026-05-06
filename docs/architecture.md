@@ -11,7 +11,7 @@ The system has three logical layers:
 
 1. **Provider adapter layer** — normalizes the differences between LLM provider SDKs behind a single streaming interface
 2. **Orchestration layer** — runs the urgency-rating round, sequences responses, manages cross-agent context, decides when the room pauses
-3. **UI layer** — group-conversation interface with real-time streaming, user controls, and meeting-minutes export
+3. **UI layer** — chat-like live room with real-time streaming, user controls, and meeting-minutes export
 
 ## The Urgency Mechanic
 
@@ -243,15 +243,15 @@ The SSE stream from `POST /api/conversations/:id/messages` emits typed events:
 
 ## Frontend Structure
 
-The UI is a single-page React app. The main view is a focused **group conversation** where user and advisor turns appear as readable message blocks. Each advisor has a color and name so the back-and-forth is easy to follow. When the user is done, the conversation can be exported as a meeting-minutes PDF.
+The UI is a single-page React app. The main view is a focused, chat-like **live room** where user and advisor turns stream in as readable message blocks. New activity should feel like it appears at the bottom of the conversation, with a bottom composer for the user's next message. Each advisor has a color and name so the back-and-forth is easy to follow. When the user is done, the conversation can be exported as a meeting-minutes PDF.
 
 Key components:
 
-- `ConversationThread` — the main scrolling group conversation
-- `MessageBlock` — one user message or one advisor response
+- `ConversationThread` — the main bottom-pinned live conversation
+- `MessageBlock` — one user message or one advisor response in the chat-like stream
 - `UrgencyBadges` — the live "show of hands" before responses start streaming
 - `RoundIndicator` — tells the user which round and whether the room paused
-- `ComposerBar` — input field with pause/interrupt controls
+- `ComposerBar` — bottom input field with send and pause/interrupt controls
 - `MinutesExport` — generate/download a meeting-minutes PDF from the finished discussion
 - `ConversationHistory` — reload previous conversations once persistence is available
 
@@ -265,7 +265,7 @@ Key components:
 | Advisor identity | Seeded provider-backed advisor profiles for MVP; custom advisors later | Keeps the MVP focused on the urgency mechanic while preserving the future persona/boardroom model |
 | Persistence | PostgreSQL via Prisma | Real relational persistence is part of the learning goal; Supabase Postgres is the likely hosted database |
 | Deploy | Stretch goal | Local + recorded video demo is acceptable fallback |
-| UI aesthetic | Live group conversation plus meeting-minutes export | Chat is the clearest interaction model for live discussion; minutes remain the durable artifact |
+| UI aesthetic | Chat-like live room plus meeting-minutes export | Chat is the clearest interaction model for live discussion; minutes remain the durable artifact |
 
 ## Known Limitations & Future Work
 

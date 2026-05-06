@@ -1,5 +1,5 @@
 import { rankAdvisorsByUrgency, type Advisor, type AdvisorUrgencyRating } from "./rankAdvisorsByUrgency.js";
-import type { ProviderMessage } from "../providers/types.js";
+import type { ProviderMessage, ProviderCallOptions } from "../providers/types.js";
 
 export type RoundEvent =
   | {
@@ -30,7 +30,7 @@ export type RoundEvent =
       maxTurnsPerRound: number;
     };
 
-type RunAdvisorRoundOptions = {
+type RunAdvisorRoundOptions = ProviderCallOptions & {
   speakingThreshold: number;
   maxTurnsPerRound: number;
 };
@@ -45,7 +45,7 @@ export async function* runAdvisorRound(
   let turnCount = 0;
 
   while (turnCount < options.maxTurnsPerRound) {
-    const ratings = await rankAdvisorsByUrgency(advisors, conversationSoFar);
+    const ratings = await rankAdvisorsByUrgency(advisors, conversationSoFar, options);
 
     yield {
       type: "urgency_scores",
@@ -77,7 +77,8 @@ export async function* runAdvisorRound(
 
     for await (const text of advisor.provider.streamResponse(
       advisor.systemPrompt,
-      conversationSoFar
+      conversationSoFar,
+      options
     )) {
       responseText += text;
 
