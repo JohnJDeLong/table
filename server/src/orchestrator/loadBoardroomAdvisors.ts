@@ -5,6 +5,7 @@ import { OpenAIAdapter } from "../providers/OpenAIAdapter.js";
 import type { LLMProvider } from "../providers/types.js";
 import type { Advisor } from "./rankAdvisorsByUrgency.js";
 import { GeminiAdapter } from "../providers/GeminiAdapter.js";
+import { GrokAdapter } from "../providers/GrokAdapter.js";
 
 const defaultBoardroomId = "seed_boardroom_default";
 
@@ -21,6 +22,11 @@ function createProviderAdapter(provider: Provider): LLMProvider | null {
     if (provider === Provider.gemini) {
         return new GeminiAdapter(process.env.GEMINI_API_KEY);
     }
+    
+    if (provider === Provider.grok) {
+        return new GrokAdapter(process.env.XAI_API_KEY);
+    }
+
 
   return null;
 }

@@ -7,7 +7,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Get Anthropic API key
 - [x] Get OpenAI API key
 - [x] Get Google AI Studio key
-- [ ] Apply for xAI / Grok API access. If blocked, pick fallback (Mistral or Llama-via-Groq) and note in `agents.local.md`
+- [x] Get xAI / Grok API key
 - [ ] Set billing alerts at $50 on each provider
 
 ## Block 1: Setup + first non-streamed call — Complete
@@ -84,7 +84,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Message stream that feels familiar like texting while staying focused on decision work
 - [x] Auto-scroll to newest message
 - [x] Continue the current backend conversation when the user sends follow-up prompts
-- [ ] Pause / interrupt button always visible
+- [x] Stop button appears during active rounds and cancels the backend advisor run
 - [ ] Export/download finished discussion as a meeting-minutes PDF
 - [ ] Commit
 
@@ -94,29 +94,31 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Add Gemini key placeholder to `.env.example`
 - [x] Verify current Gemini model identifiers before hardcoding them
 - [x] Install the Google/Gemini SDK
-- [ ] Add `GeminiAdapter` behind the existing `LLMProvider` interface
-- [ ] Wire Gemini into `loadBoardroomAdvisors`
-- [ ] Enable Gemini in the default boardroom once the adapter works
-- [ ] Test `/api/urgency-test` and `/api/round-test` with Gemini active
+- [x] Add `GeminiAdapter` behind the existing `LLMProvider` interface
+- [x] Wire Gemini into `loadBoardroomAdvisors`
+- [x] Enable Gemini in the default boardroom once the adapter works
+- [x] Test `/api/urgency-test` and `/api/round-test` with Gemini active
 - [ ] Commit
 
-## Block 9: Add Grok or fallback provider
+## Block 9: Add Grok provider
 
-- [ ] Apply for xAI / Grok API access
-- [ ] If xAI access is blocked, choose fallback provider and note it in `agents.local.md`
-- [ ] Add provider key placeholder to `.env.example`
-- [ ] Verify current model identifiers before hardcoding them
-- [ ] Install the provider SDK
-- [ ] Add the provider adapter behind the existing `LLMProvider` interface
-- [ ] Wire the provider into `loadBoardroomAdvisors`
-- [ ] Enable the provider in the default boardroom once the adapter works
-- [ ] Test `/api/urgency-test` and `/api/round-test` with all active providers
+- [x] Get xAI / Grok API key and add it to local `.env`
+- [x] Add `XAI_API_KEY` placeholder to `.env.example`
+- [x] Verify current Grok model identifiers before hardcoding them
+- [x] Reuse the existing OpenAI SDK with xAI `baseURL`
+- [x] Add `GrokAdapter` behind the existing `LLMProvider` interface
+- [x] Wire Grok into `loadBoardroomAdvisors`
+- [x] Enable Grok in the default boardroom once the adapter works
+- [x] Test `/api/urgency-test` with Grok active
+- [x] Test all four providers from the UI
+- [ ] Run final server/client builds
 - [ ] Commit
 
 ## Block 10: All-provider end-to-end + conversation hygiene
 
 - [ ] Confirm active providers participate through the database-backed boardroom runtime
 - [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
+- [ ] Tune advisor prompts/routing to preserve useful convergence while reducing low-value repetition
 - [ ] Load a saved conversation on app reload
 - [ ] Align UI, database, and provider conversation history so they share one source of truth
 - [ ] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
