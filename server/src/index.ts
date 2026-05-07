@@ -76,6 +76,59 @@ app.get("/api/db-test", async (_req, res) => {
   }
 });
 
+app.get("/api/sidebar", async (_req, res) => {
+  try {
+    const workspaces = await prisma.workspace.findMany({
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        boardrooms: {
+          orderBy: {
+            createdAt: "asc",
+          },
+          include: {
+            advisors: {
+              orderBy: {
+                position: "asc",
+              },
+              include: {
+                advisorProfile: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({
+      workspaces: workspaces.map((workspace) => ({
+        id: workspace.id,
+        name: workspace.name,
+        boardrooms: workspace.boardrooms.map((boardroom) => ({
+          id: boardroom.id,
+          name: boardroom.name,
+          description: boardroom.description,
+          pauseThreshold: boardroom.pauseThreshold,
+          maxTurnsPerRound: boardroom.maxTurnsPerRound,
+          advisors: boardroom.advisors.map((boardroomAdvisor) => ({
+            id: boardroomAdvisor.id,
+            profileId: boardroomAdvisor.advisorProfile.id,
+            speakerId: boardroomAdvisor.advisorProfile.provider,
+            name: boardroomAdvisor.advisorProfile.displayName,
+            provider: boardroomAdvisor.advisorProfile.provider,
+            enabled: boardroomAdvisor.enabled,
+            position: boardroomAdvisor.position,
+          })),
+        })),
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to load sidebar" });
+  }
+});
+
 
 app.post("/api/urgency-test", async (req, res) => {
   try {

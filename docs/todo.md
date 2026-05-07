@@ -141,6 +141,9 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [ ] Load sidebar workspaces, boardrooms, and advisors from the API instead of hardcoding them
 - [ ] API-back sidebar provider indicators so enabled/disabled advisor state reflects the database
+- [ ] Treat sidebar data as server state: initial `loadSidebar()` on app mount, then refresh after workspace/boardroom/advisor create, edit, or delete
+- [ ] Ask whether to keep manual `loadSidebar()` refreshes for MVP or introduce TanStack Query with mutation invalidation
+- [ ] Later: consider optimistic sidebar updates after mutations if the CRUD flow feels too slow
 - [ ] Add real behavior for workspace `+`
 - [ ] Add real behavior for boardroom `+`
 - [ ] Add real behavior for advisor `+`

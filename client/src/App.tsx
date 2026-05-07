@@ -21,20 +21,36 @@ type ChatMessage = {
   text: string;
 };
 
-const sidebarAdvisors = [
-  { id: "anthropic", name: "Claude", enabled: true },
-  { id: "openai", name: "OpenAI", enabled: true },
-  { id: "gemini", name: "Gemini", enabled: true },
-  { id: "grok", name: "Grok", enabled: true },
-];
+type SidebarAdvisor = {
+  id: string;
+  profileId: string;
+  speakerId: string;
+  name: string;
+  provider: string;
+  enabled: boolean;
+  position: number;
+};
 
-const advisorDisplayNames = Object.fromEntries(
-  sidebarAdvisors.map((advisor) => [advisor.id, advisor.name])
-);
+type SidebarBoardroom = {
+  id: string;
+  name: string;
+  description: string | null;
+  pauseThreshold: number;
+  maxTurnsPerRound: number;
+  advisors: SidebarAdvisor[];
+};
 
-function getSpeakerName(speakerId: string) {
-  return advisorDisplayNames[speakerId] ?? speakerId;
-}
+type SidebarWorkspace = {
+  id: string;
+  name: string;
+  boardrooms: SidebarBoardroom[];
+};
+
+type SidebarData = {
+  workspaces: SidebarWorkspace[];
+};
+
+
 
 
 function App() {
@@ -44,9 +60,33 @@ function App() {
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+  
+  const activeWorkspace = sidebarData?.workspaces[0] ?? null;
+  const activeBoardroom = activeWorkspace?.boardrooms[0] ?? null;
+  const sidebarAdvisors = activeBoardroom?.advisors ?? [];
+
+  const advisorDisplayNames = Object.fromEntries(
+    sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
+  );
+
+  function getSpeakerName(speakerId: string) {
+    return advisorDisplayNames[speakerId] ?? speakerId;
+  }
 
   const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    async function loadSidebar() {
+      const res = await fetch("/api/sidebar");
+      const data = await res.json();
+
+      setSidebarData(data);
+    }
+
+    void loadSidebar();
+  }, []);
+
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth"});
@@ -232,7 +272,7 @@ function App() {
 
           <details className="workspace-group" open>
             <summary className="workspace-button">
-              Default Workspace
+              {activeWorkspace?.name ?? "Loading workspace"}
             </summary>
 
             <div className="room-list">
@@ -248,7 +288,7 @@ function App() {
               </div>
 
               <button type="button" className="room-item room-item--active">
-                Default Boardroom
+                {activeBoardroom?.name ?? "Loading room"}
               </button>
 
               <div className="advisor-list">
@@ -265,7 +305,7 @@ function App() {
 
                 {sidebarAdvisors.map((advisor) => {
                   const rating = urgencyRatings.find(
-                    (item) => item.advisorId === advisor.id
+                    (item) => item.advisorId === advisor.speakerId
                   );
                   const urgencyOpacity = rating
                     ? Math.max(0.12, rating.urgency / 10)
