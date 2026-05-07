@@ -6,7 +6,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [x] Get Anthropic API key
 - [x] Get OpenAI API key
-- [ ] Get Google AI Studio key
+- [x] Get Google AI Studio key
 - [ ] Apply for xAI / Grok API access. If blocked, pick fallback (Mistral or Llama-via-Groq) and note in `agents.local.md`
 - [ ] Set billing alerts at $50 on each provider
 
@@ -90,10 +90,10 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 8: Add Gemini provider
 
-- [ ] Get Google AI Studio key and add it to local `.env`
-- [ ] Add Gemini key placeholder to `.env.example`
-- [ ] Verify current Gemini model identifiers before hardcoding them
-- [ ] Install the Google/Gemini SDK
+- [x] Get Google AI Studio key and add it to local `.env`
+- [x] Add Gemini key placeholder to `.env.example`
+- [x] Verify current Gemini model identifiers before hardcoding them
+- [x] Install the Google/Gemini SDK
 - [ ] Add `GeminiAdapter` behind the existing `LLMProvider` interface
 - [ ] Wire Gemini into `loadBoardroomAdvisors`
 - [ ] Enable Gemini in the default boardroom once the adapter works
@@ -118,6 +118,9 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Confirm active providers participate through the database-backed boardroom runtime
 - [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
 - [ ] Load a saved conversation on app reload
+- [ ] Align UI, database, and provider conversation history so they share one source of truth
+- [ ] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
+- [ ] Persist visible partial advisor output on Stop so future provider context matches what the user saw
 - [ ] Add conversation deletion so removing a conversation also cleans up its messages, urgency ratings, and round events
 - [ ] Decide whether separate `UrgencyRating` rows are needed beyond persisted round event payloads
 - [ ] Commit
@@ -135,6 +138,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 ## Block 12: Real workspace, boardroom, and advisor controls
 
 - [ ] Load sidebar workspaces, boardrooms, and advisors from the API instead of hardcoding them
+- [ ] API-back sidebar provider indicators so enabled/disabled advisor state reflects the database
 - [ ] Add real behavior for workspace `+`
 - [ ] Add real behavior for boardroom `+`
 - [ ] Add real behavior for advisor `+`

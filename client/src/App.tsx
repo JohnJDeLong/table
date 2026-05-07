@@ -22,11 +22,19 @@ type ChatMessage = {
 };
 
 const sidebarAdvisors = [
-  { id: "anthropic", name: "Anthropic", enabled: true },
+  { id: "anthropic", name: "Claude", enabled: true },
   { id: "openai", name: "OpenAI", enabled: true },
-  { id: "gemini", name: "Gemini", enabled: false },
+  { id: "gemini", name: "Gemini", enabled: true },
   { id: "grok", name: "Grok", enabled: false },
 ];
+
+const advisorDisplayNames = Object.fromEntries(
+  sidebarAdvisors.map((advisor) => [advisor.id, advisor.name])
+);
+
+function getSpeakerName(speakerId: string) {
+  return advisorDisplayNames[speakerId] ?? speakerId;
+}
 
 
 function App() {
@@ -325,7 +333,7 @@ function App() {
             className={`message-block message-block--${message.speakerType}`}
             key={message.id}
           >
-            <p className="speaker">{message.speakerId}</p>
+            <p className="speaker">{getSpeakerName(message.speakerId)}</p>
             <p className="message-text">{message.text}</p>
           </article>
         ))}

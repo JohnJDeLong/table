@@ -10,17 +10,20 @@ const defaultWorkspaceId = "seed_workspace_default";
 const defaultBoardroomId = "seed_boardroom_default";
 const defaultUserEmail = "john@table.local";
 
+function createAdvisorPrompt(advisorName: string) {
+  return `You are the ${advisorName} advisor inside Table, a multi-advisor room with a human user and other AI advisors. Other advisors may speak before or after you. Do not claim you are the only AI present. Speak when you can add meaningful value.`;
+}
+
 const defaultAdvisors = [
   {
     id: "seed_advisor_anthropic",
-    displayName: "Anthropic",
-    description: "You are the Anthropic advisor at Table",
+    displayName: "Claude",
+    description: "You are the Claude advisor at Table",
     provider: Provider.anthropic,
     ratingModel: "claude-haiku-4-5-20251001",
     responseModel: "claude-haiku-4-5-20251001",
     enabled: true,
-    systemPrompt:
-      "You are the Anthropic advisor at Table. Speak when you can add meaningful value.",
+    systemPrompt: createAdvisorPrompt("Claude"),
   },
   {
     id: "seed_advisor_openai",
@@ -30,19 +33,17 @@ const defaultAdvisors = [
     ratingModel: "gpt-5.5",
     responseModel: "gpt-5.5",
     enabled: true,
-    systemPrompt:
-      "You are the OpenAI advisor at Table. Speak when you can add meaningful value.",
+    systemPrompt: createAdvisorPrompt("OpenAI"),
   },
   {
     id: "seed_advisor_gemini",
     displayName: "Gemini",
     description: "You are the Gemini advisor at Table",
     provider: Provider.gemini,
-    ratingModel: "not-configured-yet",
-    responseModel: "not-configured-yet",
-    enabled: false,
-    systemPrompt:
-      "You are the Gemini advisor at Table. Speak when you can add meaningful value.",
+    ratingModel: "gemini-2.5-flash-lite",
+    responseModel: "gemini-2.5-flash",
+    enabled: true,
+    systemPrompt: createAdvisorPrompt("Gemini"),
   },
   {
     id: "seed_advisor_grok",
@@ -52,8 +53,7 @@ const defaultAdvisors = [
     ratingModel: "not-configured-yet",
     responseModel: "not-configured-yet",
     enabled: false,
-    systemPrompt:
-      "You are the Grok advisor at Table. Speak when you can add meaningful value.",
+    systemPrompt: createAdvisorPrompt("Grok"),
   },
 ];
 

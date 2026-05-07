@@ -4,18 +4,23 @@ import { AnthropicAdapter } from "../providers/AnthropicAdapter.js";
 import { OpenAIAdapter } from "../providers/OpenAIAdapter.js";
 import type { LLMProvider } from "../providers/types.js";
 import type { Advisor } from "./rankAdvisorsByUrgency.js";
-
+import { GeminiAdapter } from "../providers/GeminiAdapter.js";
 
 const defaultBoardroomId = "seed_boardroom_default";
 
 function createProviderAdapter(provider: Provider): LLMProvider | null {
-     if (provider === Provider.anthropic) {
-    return new AnthropicAdapter(process.env.ANTHROPIC_API_KEY);
-  }
 
-  if (provider === Provider.openai) {
-    return new OpenAIAdapter(process.env.OPENAI_API_KEY);
-  }
+    if (provider === Provider.anthropic) {
+        return new AnthropicAdapter(process.env.ANTHROPIC_API_KEY);
+    }
+
+    if (provider === Provider.openai) {
+        return new OpenAIAdapter(process.env.OPENAI_API_KEY);
+    }
+
+    if (provider === Provider.gemini) {
+        return new GeminiAdapter(process.env.GEMINI_API_KEY);
+    }
 
   return null;
 }
