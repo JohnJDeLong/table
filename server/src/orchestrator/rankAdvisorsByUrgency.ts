@@ -13,20 +13,32 @@ export type AdvisorUrgencyRating = UrgencyRating & {
 
 export async function rankAdvisorsByUrgency(advisors: Advisor[], conversation: ProviderMessage[], options?: ProviderCallOptions): Promise<AdvisorUrgencyRating[]> {
   const ratingsWithOrder = await Promise.all(
-    advisors.map(async (advisor, order) => {
-      const rating = await advisor.provider.rateUrgency(
-        advisor.systemPrompt,
-        conversation,
-        options
-      );
+  advisors.map(async (advisor, order) => {
+      try {
+        const rating = await advisor.provider.rateUrgency(
+          advisor.systemPrompt,
+          conversation,
+          options
+        );
 
-      return {
-        advisorId: advisor.id,
-        order,
-        ...rating,
-      };
+        return {
+          advisorId: advisor.id,
+          order,
+          ...rating,
+        };
+      } catch (error) {
+        console.error(`Failed to rate urgency for ${advisor.id}`, error);
+
+        return {
+          advisorId: advisor.id,
+          order,
+          urgency: 0,
+          reason: "Provider was unavailable during urgency rating.",
+        };
+      }
     })
   );
+
 
   return ratingsWithOrder
     .sort((a, b) => b.urgency - a.urgency || a.order - b.order)

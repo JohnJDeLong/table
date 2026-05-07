@@ -55,7 +55,7 @@ export class GrokAdapter implements LLMProvider {
 
     const response = await this.client.chat.completions.create(
     {
-        model: "grok-4-1-fast-non-reasoning",
+        model: "grok-4.3",
         messages,
     },
     {
