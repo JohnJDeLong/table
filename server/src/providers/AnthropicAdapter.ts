@@ -57,11 +57,12 @@ export class AnthropicAdapter implements LLMProvider {
         return parseUrgencyRating(text); 
     }
 
-    async *streamResponse(_systemPrompt: string, conversation: ProviderMessage[], options?: ProviderCallOptions): AsyncIterable<string> {
+    async *streamResponse(systemPrompt: string, conversation: ProviderMessage[], options?: ProviderCallOptions): AsyncIterable<string> {
         const stream = await this.client.messages.create(
             {
                 model: "claude-haiku-4-5-20251001",
                 max_tokens: 300,
+                system: systemPrompt || undefined,
                 messages: conversation,
                 stream: true,
             },
