@@ -7,7 +7,7 @@ import {
 } from "../generated/prisma/enums.js";
 
 const defaultWorkspaceId = "seed_workspace_default";
-const defaultBoardroomId = "seed_boardroom_default";
+const defaultTableId = "seed_table_default";
 const defaultUserEmail = "john@table.local";
 
 function createAdvisorPrompt(advisorName: string) {
@@ -104,20 +104,20 @@ async function main() {
     },
   });
 
-  const boardroom = await prisma.boardroom.upsert({
-    where: { id: defaultBoardroomId },
+  const table = await prisma.table.upsert({
+    where: { id: defaultTableId },
     update: {
       workspaceId: workspace.id,
-      name: "Default Boardroom",
-      description: "The default MVP room for provider-backed advisors.",
+      name: "Default Table",
+      description: "The default MVP table for provider-backed advisors.",
       pauseThreshold: 3,
       maxTurnsPerRound: 10,
     },
     create: {
-      id: defaultBoardroomId,
+      id: defaultTableId,
       workspaceId: workspace.id,
-      name: "Default Boardroom",
-      description: "The default MVP room for provider-backed advisors.",
+      name: "Default Table",
+      description: "The default MVP table for provider-backed advisors.",
       pauseThreshold: 3,
       maxTurnsPerRound: 10,
     },
@@ -154,17 +154,17 @@ async function main() {
       },
     });
 
-    await prisma.boardroomAdvisor.upsert({
-      where: { id: `seed_boardroom_advisor_${advisor.provider}` },
+    await prisma.tableAdvisor.upsert({
+      where: { id: `seed_table_advisor_${advisor.provider}` },
       update: {
-        boardroomId: boardroom.id,
+        tableId: table.id,
         advisorProfileId: profile.id,
         enabled: advisor.enabled,
         position: index + 1,
       },
       create: {
-        id: `seed_boardroom_advisor_${advisor.provider}`,
-        boardroomId: boardroom.id,
+        id: `seed_table_advisor_${advisor.provider}`,
+        tableId: table.id,
         advisorProfileId: profile.id,
         enabled: advisor.enabled,
         position: index + 1,
@@ -172,7 +172,7 @@ async function main() {
     });
   }
 
-  console.log("Seeded default Table workspace, boardroom, and advisors.");
+  console.log("Seeded default Table workspace, table, and advisors.");
 }
 
 main()

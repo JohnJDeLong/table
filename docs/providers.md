@@ -212,7 +212,7 @@ advisors = [
 ]
 
 
-MVP uses this runtime list directly. Saved boardrooms, custom advisor sets, and named personas are future features.
+MVP uses this runtime list directly. Saved tables, custom advisor sets, and named personas are future features.
 
 This enables:
 

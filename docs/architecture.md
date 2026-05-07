@@ -111,9 +111,9 @@ The orchestrator never knows or cares which provider SDK is behind a given advis
 
 ## Data Model
 
-The database is designed for the future product shape — users, workspaces, reusable advisor profiles, boardrooms, conversations, and trace data — even though the MVP only uses a seeded default path. This avoids redesigning persistence when auth, team workspaces, custom advisors, and multiple boardrooms arrive later.
+The database is designed for the future product shape — users, workspaces, reusable advisor profiles, tables, conversations, and trace data — even though the MVP only uses a seeded default path. This avoids redesigning persistence when auth, team workspaces, custom advisors, and multiple tables arrive later.
 
-MVP persistence is still for observability first: save what happened, why the room chose each speaker, and enough event history to debug or reload the conversation. The MVP does not need login, workspace management, boardroom editing, or advisor editing UI.
+MVP persistence is still for observability first: save what happened, why the room chose each speaker, and enough event history to debug or reload the conversation. The MVP does not need login, workspace management, table editing, or advisor editing UI.
 
 ```
 User
@@ -154,7 +154,7 @@ AdvisorProfile
   created_at
   updated_at
 
-Boardroom
+Table
   id
   workspace_id
   name
@@ -164,9 +164,9 @@ Boardroom
   created_at
   updated_at
 
-BoardroomAdvisor
+TableAdvisor
   id
-  boardroom_id
+  table_id
   advisor_profile_id
   enabled
   position
@@ -177,7 +177,7 @@ BoardroomAdvisor
 Conversation
   id
   workspace_id
-  boardroom_id
+  table_id
   title             auto-generated from first user message
   initial_prompt
   status            "running" | "complete" | "interrupted" | "turn_cap_reached" | "error"
@@ -216,7 +216,7 @@ RoundEvent
   created_at
 ```
 
-For MVP, seed a default user, default workspace, default boardroom, and four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. The app can use those defaults without exposing auth, workspace, boardroom, or advisor-management UI yet.
+For MVP, seed a default user, default workspace, default table, and four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. The app can use those defaults without exposing auth, workspace, table, or advisor-management UI yet.
 
 Advisor profiles may be owned by a user or by a workspace. Personal advisors are private by default. Workspace advisors are visible to workspace members and editable according to workspace permissions. A workspace advisor can later be copied into a user's personal advisor library by creating a new user-owned `AdvisorProfile` that references `copied_from_advisor_profile_id`.
 
@@ -226,7 +226,7 @@ The exact SSE payloads are defined in `events.md`.
 
 Backend exposes:
 
-- `POST /api/conversations` — start a new conversation in the default or selected boardroom
+- `POST /api/conversations` — start a new conversation in the default or selected table
 - `GET /api/conversations/:id` — fetch full conversation history and trace data
 - `POST /api/conversations/:id/messages` — user sends a message; opens an SSE stream emitting round events
 - `POST /api/conversations/:id/interrupt` — user interrupts the current round
@@ -262,7 +262,7 @@ Key components:
 | Turn order | Urgency-based, not round-robin | Differentiator and emergent behavior |
 | Cross-agent awareness | Yes — each speaker sees prior speakers in this round and urgency recalibrates after each response | Enables real debate, not parallel monologues |
 | Round termination | Self-paused via urgency threshold, with temporary turn cap during MVP | Preserves the natural "room goes quiet" mechanic while giving early builds a safety fuse |
-| Advisor identity | Seeded provider-backed advisor profiles for MVP; custom advisors later | Keeps the MVP focused on the urgency mechanic while preserving the future persona/boardroom model |
+| Advisor identity | Seeded provider-backed advisor profiles for MVP; custom advisors later | Keeps the MVP focused on the urgency mechanic while preserving the future persona/table model |
 | Persistence | PostgreSQL via Prisma | Real relational persistence is part of the learning goal; Supabase Postgres is the likely hosted database |
 | Deploy | Stretch goal | Local + recorded video demo is acceptable fallback |
 | UI aesthetic | Chat-like live room plus meeting-minutes export | Chat is the clearest interaction model for live discussion; minutes remain the durable artifact |
@@ -272,16 +272,17 @@ Key components:
 - **Token context growth.** Long conversations include the full transcript in every model's context, which scales quadratically in cost. Future: after round N, summarize older rounds into a rolling context summary while preserving recent turns verbatim.
 - **No agent memory across conversations.** Each conversation is independent. Future: per-advisor long-term memory of the user.
 - **No multi-modal.** Text only. Future: voice input/output, image attachment.
-- **Single-user.** No accounts or auth. Future: shared boardrooms, collaborative sessions.
+- **Single-user.** No accounts or auth. Future: shared tables, collaborative sessions.
 - **No analytics.** No usage tracking, no quality scoring, no A/B framework.
 
 
 ## Terminology
 
+Table = product-facing saved discussion space where advisor profiles participate
+Table = saved discussion space that chooses which advisor profiles participate
+TableAdvisor = join record that includes/excludes advisor profiles in a Table
 AdvisorProfile = reusable advisor/persona configuration, owned by a user or workspace
-Boardroom = saved room setup that chooses which advisor profiles participate
-BoardroomAdvisor = join record that includes/excludes advisor profiles in a boardroom
-Advisor = runtime participant selected from the active boardroom's advisor profiles
+Advisor = runtime participant selected from the active Table's advisor profiles
 Agent = runtime execution of an advisor during a turn
 Provider = LLM backend (Anthropic, OpenAI, Google, xAI)
 Round = the room's full response to one user message, ending when the room goes quiet

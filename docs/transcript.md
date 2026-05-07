@@ -26,12 +26,12 @@ The transcript system should support:
 
 ## Transcript structure
 
-A transcript represents a single conversation. In the future product, that conversation belongs to a boardroom inside a workspace. For the MVP, conversations use seeded default workspace and boardroom records.
+A transcript represents a single conversation. In the future product, that conversation belongs to a table inside a workspace. For the MVP, conversations use seeded default workspace and table records.
 
 Each transcript contains:
 
 - conversation metadata
-- workspace and boardroom references
+- workspace and table references
 - advisor profile references
 - ordered messages
 - urgency ratings
@@ -58,7 +58,7 @@ Example:
 {
   conversationId: string,
   workspaceId: string,
-  boardroomId: string,
+  tableId: string,
   createdAt: timestamp,
   updatedAt: timestamp
 }
@@ -69,7 +69,7 @@ Metadata allows transcripts to be:
 - resumed
 - indexed
 - filtered
-- grouped by workspace and boardroom
+- grouped by workspace and table
 
 
 ## Terminology Mapping
@@ -96,7 +96,7 @@ advisorProfileId: "..."
 advisorId: "anthropic"
 provider: "anthropic"
 
-For MVP, the app seeds four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. Later, users and workspaces can create custom advisor profiles and boardrooms can include or exclude them.
+For MVP, the app seeds four provider-backed advisor profiles: Anthropic, OpenAI, Gemini, and Grok. Later, users and workspaces can create custom advisor profiles and tables can include or exclude them.
 
 
 ## Urgency score storage
@@ -203,9 +203,9 @@ The schema is future-aware, but the MVP runtime uses seeded defaults:
 
 - default user
 - default workspace
-- default boardroom
+- default table
 - four provider-backed advisor profiles
-- four boardroom advisor rows
+- four table advisor rows
 
 Relational structure:
 
@@ -213,14 +213,14 @@ users
 workspaces
 workspace_members
 advisor_profiles
-boardrooms
-boardroom_advisors
+tables
+table_advisors
 conversations
 messages
 urgency_ratings
 round_events
 
-This structure supports future auth, workspaces, reusable personal advisors, workspace-owned advisors, boardroom composition, and current MVP trace persistence without requiring all those UI features now.
+This structure supports future auth, workspaces, reusable personal advisors, workspace-owned advisors, table composition, and current MVP trace persistence without requiring all those UI features now.
 
 
 ## Transcript rendering model
@@ -255,4 +255,4 @@ Planned transcript-layer improvements:
 - quote extraction
 - advisor contribution analytics
 - export to markdown / PDF
-- multi-session boardroom history
+- multi-session table history

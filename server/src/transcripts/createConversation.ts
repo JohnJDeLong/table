@@ -2,13 +2,13 @@ import { prisma } from "../config/prisma.js";
 import { SpeakerType } from "../generated/prisma/enums.js";
 
 const defaultWorkspaceId = "seed_workspace_default"; 
-const defaultBoardroomId = "seed_boardroom_default"; 
+const defaultTableId = "seed_table_default";
 
 export async function createConversation(initialPrompt: string) {
     const conversation = await prisma.conversation.create({
         data: {
             workspaceId: defaultWorkspaceId,
-            boardroomId: defaultBoardroomId,
+            tableId: defaultTableId,
             title: initialPrompt.slice(0,80),
             initialPrompt,
             messages: {

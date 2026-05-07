@@ -13,7 +13,7 @@ import type { Prisma } from "./generated/prisma/client.js";
 import { createConversation } from "./transcripts/createConversation.js";
 import { saveAdvisorMessage, markAdvisorMessageStatus, updateAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
 import { saveRoundEvent } from "./events/saveRoundEvent.js";
-import { loadBoardroomAdvisors } from "./orchestrator/loadBoardroomAdvisors.js";
+import { loadTableAdvisors } from "./orchestrator/loadTableAdvisors.js";
 import { saveUserMessage } from "./transcripts/saveUserMessage.js";
 import { loadProviderConversation } from "./transcripts/loadProviderConversation.js";
 
@@ -48,11 +48,11 @@ app.get("/api/health", (_req, res) => {
 //smoke test route 
 app.get("/api/db-test", async (_req, res) => {
   try {
-    const [userCount, workspaceCount, boardroomCount, advisorCount, conversationCount, messageCount, roundEventCount] =
+    const [userCount, workspaceCount, tableCount, advisorCount, conversationCount, messageCount, roundEventCount] =
       await Promise.all([
         prisma.user.count(),
         prisma.workspace.count(),
-        prisma.boardroom.count(),
+        prisma.table.count(),
         prisma.advisorProfile.count(),
         prisma.conversation.count(),
         prisma.message.count(),
@@ -64,7 +64,7 @@ app.get("/api/db-test", async (_req, res) => {
       ok: true,
       userCount,
       workspaceCount,
-      boardroomCount,
+      tableCount,
       advisorCount,
       conversationCount,
       messageCount,
@@ -83,7 +83,7 @@ app.get("/api/sidebar", async (_req, res) => {
         createdAt: "asc",
       },
       include: {
-        boardrooms: {
+        tables: {
           orderBy: {
             createdAt: "asc",
           },
@@ -105,20 +105,20 @@ app.get("/api/sidebar", async (_req, res) => {
       workspaces: workspaces.map((workspace) => ({
         id: workspace.id,
         name: workspace.name,
-        boardrooms: workspace.boardrooms.map((boardroom) => ({
-          id: boardroom.id,
-          name: boardroom.name,
-          description: boardroom.description,
-          pauseThreshold: boardroom.pauseThreshold,
-          maxTurnsPerRound: boardroom.maxTurnsPerRound,
-          advisors: boardroom.advisors.map((boardroomAdvisor) => ({
-            id: boardroomAdvisor.id,
-            profileId: boardroomAdvisor.advisorProfile.id,
-            speakerId: boardroomAdvisor.advisorProfile.provider,
-            name: boardroomAdvisor.advisorProfile.displayName,
-            provider: boardroomAdvisor.advisorProfile.provider,
-            enabled: boardroomAdvisor.enabled,
-            position: boardroomAdvisor.position,
+        tables: workspace.tables.map((table) => ({
+          id: table.id,
+          name: table.name,
+          description: table.description,
+          pauseThreshold: table.pauseThreshold,
+          maxTurnsPerRound: table.maxTurnsPerRound,
+          advisors: table.advisors.map((tableAdvisor) => ({
+            id: tableAdvisor.id,
+            profileId: tableAdvisor.advisorProfile.id,
+            speakerId: tableAdvisor.advisorProfile.provider,
+            name: tableAdvisor.advisorProfile.displayName,
+            provider: tableAdvisor.advisorProfile.provider,
+            enabled: tableAdvisor.enabled,
+            position: tableAdvisor.position,
           })),
         })),
       })),
@@ -141,7 +141,7 @@ app.post("/api/urgency-test", async (req, res) => {
       ? req.body.conversation
       : [{ role: "user", content: prompt }];
     
-    const advisors = await loadBoardroomAdvisors(); 
+    const advisors = await loadTableAdvisors();
 
     const ratings = await rankAdvisorsByUrgency(advisors, conversation);
 
@@ -247,7 +247,7 @@ app.post("/api/round-test", async (req, res) => {
     const responseTextByAdvisor = new Map<string, string>();
     const messageIdByAdvisor = new Map<string, string>();
     
-    const advisors = await loadBoardroomAdvisors(); 
+    const advisors = await loadTableAdvisors();
 
 
     for await (const event of runAdvisorRound(advisors, conversation, {

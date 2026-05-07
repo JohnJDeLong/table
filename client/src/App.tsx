@@ -31,7 +31,7 @@ type SidebarAdvisor = {
   position: number;
 };
 
-type SidebarBoardroom = {
+type SidebarTable = {
   id: string;
   name: string;
   description: string | null;
@@ -43,7 +43,7 @@ type SidebarBoardroom = {
 type SidebarWorkspace = {
   id: string;
   name: string;
-  boardrooms: SidebarBoardroom[];
+  tables: SidebarTable[];
 };
 
 type SidebarData = {
@@ -63,8 +63,8 @@ function App() {
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
   
   const activeWorkspace = sidebarData?.workspaces[0] ?? null;
-  const activeBoardroom = activeWorkspace?.boardrooms[0] ?? null;
-  const sidebarAdvisors = activeBoardroom?.advisors ?? [];
+  const activeTable = activeWorkspace?.tables[0] ?? null;
+  const sidebarAdvisors = activeTable?.advisors ?? [];
 
   const advisorDisplayNames = Object.fromEntries(
     sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
@@ -277,18 +277,18 @@ function App() {
 
             <div className="room-list">
               <div className="sidebar-section-header sidebar-section-header--nested">
-                <span>Boardrooms</span>
+                <span>Tables</span>
                 <button
                   type="button"
                   className="icon-button"
-                  aria-label="Add boardroom"
+                  aria-label="Add table"
                 >
                   +
                 </button>
               </div>
 
               <button type="button" className="room-item room-item--active">
-                {activeBoardroom?.name ?? "Loading room"}
+                {activeTable?.name ?? "Loading table"}
               </button>
 
               <div className="advisor-list">

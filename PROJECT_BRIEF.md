@@ -40,7 +40,7 @@ The room pauses when the advisors no longer think the conversation needs more in
 These are not required for the MVP demo, but are strong follow-up candidates if the core build is ahead of schedule.
 
 - Custom user-defined personas through an advisor editor
-- Multiple boardrooms, such as Career Council or Project Boardroom
+- Multiple tables, such as Career Council or Project Table
 - Public deployment with hosted frontend, backend, and database
 - `@`-mentions to call on a specific advisor out of urgency order
 - Save quote feature for memorable advisor lines
@@ -48,7 +48,7 @@ These are not required for the MVP demo, but are strong follow-up candidates if 
 - CLI interface where advisors work toward consensus and return their strongest shared answer, with Codex and Claude tooling available
 - Cross-interface awareness so different Table surfaces can share relevant user context and data
 - User accounts and authentication
-- Multi-user boardrooms where multiple users can sit in on the same meeting
+- Multi-user tables where multiple users can sit in on the same meeting
 - Free-for-all mode where urgency ordering is turned off and users and advisors can speak freely
 - Per-advisor long-term memory of the user
 
@@ -56,7 +56,7 @@ These are not required for the MVP demo, but are strong follow-up candidates if 
 
 - User accounts and auth
 - Custom advisor creation
-- Multi-user boardrooms
+- Multi-user tables
 - Voice input or output
 - Long-term memory across conversations
 - Production deployment
