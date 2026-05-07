@@ -61,9 +61,20 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+
   
-  const activeWorkspace = sidebarData?.workspaces[0] ?? null;
-  const activeTable = activeWorkspace?.tables[0] ?? null;
+  const activeWorkspace =
+    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
+    sidebarData?.workspaces[0] ??
+    null;
+
+  const activeTable =
+    activeWorkspace?.tables.find((table) => table.id === selectedTableId) ??
+    activeWorkspace?.tables[0] ??
+    null;
+
   const sidebarAdvisors = activeTable?.advisors ?? [];
 
   const advisorDisplayNames = Object.fromEntries(
@@ -271,7 +282,11 @@ function App() {
           </div>
 
           <details className="workspace-group" open>
-            <summary className="workspace-button">
+            <summary
+              className={`workspace-button ${
+                activeWorkspace ? "workspace-button--active" : ""
+              }`}
+            >
               {activeWorkspace?.name ?? "Loading workspace"}
             </summary>
 
@@ -287,9 +302,25 @@ function App() {
                 </button>
               </div>
 
-              <button type="button" className="room-item room-item--active">
+              <button
+                type="button"
+                className={`room-item ${activeTable?.id === selectedTableId || (!selectedTableId && activeTable)
+                  ? "room-item--active"
+                  : ""
+                }`}
+                onClick={() => {
+                  if (activeWorkspace) {
+                    setSelectedWorkspaceId(activeWorkspace.id);
+                  }
+
+                  if (activeTable) {
+                    setSelectedTableId(activeTable.id);
+                  }
+                }}
+              >
                 {activeTable?.name ?? "Loading table"}
               </button>
+
 
               <div className="advisor-list">
                 <div className="sidebar-section-header sidebar-section-header--nested">

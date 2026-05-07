@@ -91,11 +91,13 @@
 }
 
 .workspace-button {
+  position: relative;
   list-style: none;
   background: transparent;
   color: #6b7280;
   font-size: 14px;
   font-weight: 650;
+  padding-right: 28px;
 }
 
 .workspace-button::-webkit-details-marker {
@@ -105,12 +107,29 @@
 .workspace-button::before {
   content: "▾";
   display: inline-block;
-  margin-right: 8px;
+  margin-right: 6px;
   color: #8a9099;
 }
 
 .workspace-group:not([open]) .workspace-button::before {
   transform: rotate(-90deg);
+}
+
+.workspace-button--active {
+  color: #171717;
+}
+
+.workspace-button--active::after,
+.room-item--active::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #1f6feb;
+  transform: translateY(-50%);
 }
 
 .room-list {
@@ -120,6 +139,8 @@
 }
 
 .room-item {
+  position: relative;
+  padding-right: 28px;
   background: transparent;
   color: #6b7280;
   font-size: 14px;
@@ -129,6 +150,7 @@
 .room-item--active {
   background: #eef1f5;
   box-shadow: none;
+  color: #171717;
 }
 
 .advisor-list {
