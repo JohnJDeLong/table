@@ -25,7 +25,7 @@ const sidebarAdvisors = [
   { id: "anthropic", name: "Claude", enabled: true },
   { id: "openai", name: "OpenAI", enabled: true },
   { id: "gemini", name: "Gemini", enabled: true },
-  { id: "grok", name: "Grok", enabled: false },
+  { id: "grok", name: "Grok", enabled: true },
 ];
 
 const advisorDisplayNames = Object.fromEntries(

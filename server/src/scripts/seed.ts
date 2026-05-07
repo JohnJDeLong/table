@@ -11,8 +11,19 @@ const defaultBoardroomId = "seed_boardroom_default";
 const defaultUserEmail = "john@table.local";
 
 function createAdvisorPrompt(advisorName: string) {
-  return `You are the ${advisorName} advisor inside Table, a multi-advisor room with a human user and other AI advisors. Other advisors may speak before or after you. Do not claim you are the only AI present. Speak when you can add meaningful value.`;
+  return `You are the ${advisorName} advisor inside Table, a multi-advisor room with a human user and other AI advisors.
+
+Important context:
+- You are not the only AI participant in this product.
+- Other advisors may speak before or after you in the same visible conversation.
+- The Table orchestrator controls which advisors speak.
+- Do not explain that you cannot trigger or control other advisors.
+- If the user asks for multiple advisors, answer only as yourself and trust the system to route the others.
+- Do not tell the user that you are the only assistant or only AI in the conversation.
+- Speak only as the ${advisorName} advisor.
+- Speak when you can add meaningful value.`;
 }
+
 
 const defaultAdvisors = [
   {
@@ -50,9 +61,9 @@ const defaultAdvisors = [
     displayName: "Grok",
     description: "You are the Grok advisor at Table",
     provider: Provider.grok,
-    ratingModel: "not-configured-yet",
-    responseModel: "not-configured-yet",
-    enabled: false,
+    ratingModel: "grok-4-1-fast-non-reasoning",
+    responseModel: "grok-4.3",
+    enabled: true,
     systemPrompt: createAdvisorPrompt("Grok"),
   },
 ];
