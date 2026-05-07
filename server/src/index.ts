@@ -8,10 +8,10 @@ import type { LLMProvider, ProviderMessage } from "./providers/types.js";
 import { rankAdvisorsByUrgency, type Advisor } from "./orchestrator/rankAdvisorsByUrgency.js";
 import { runAdvisorRound, type RoundEvent } from "./orchestrator/runAdvisorRound.js";
 import { prisma } from "./config/prisma.js"
-import { Provider } from "./generated/prisma/enums.js";
+import { Provider, MessageStatus } from "./generated/prisma/enums.js";
 import type { Prisma } from "./generated/prisma/client.js";
 import { createConversation } from "./transcripts/createConversation.js";
-import { saveAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
+import { saveAdvisorMessage, markAdvisorMessageStatus, updateAdvisorMessage } from "./transcripts/saveAdvisorMessage.js";
 import { saveRoundEvent } from "./events/saveRoundEvent.js";
 import { loadBoardroomAdvisors } from "./orchestrator/loadBoardroomAdvisors.js";
 import { saveUserMessage } from "./transcripts/saveUserMessage.js";
@@ -192,6 +192,7 @@ app.post("/api/round-test", async (req, res) => {
     let turnIndex = (latestMessage?.turnIndex ?? -1) + 1;
 
     const responseTextByAdvisor = new Map<string, string>();
+    const messageIdByAdvisor = new Map<string, string>();
     
     const advisors = await loadBoardroomAdvisors(); 
 
@@ -216,30 +217,66 @@ app.post("/api/round-test", async (req, res) => {
 
       sequence += 1; 
 
-      if (event.type === 'token') {
-        responseTextByAdvisor.set(
-          event.advisorId,
-          `${responseTextByAdvisor.get(event.advisorId) ?? ""}${event.text}`
-        );
-      }
 
-      if (event.type === "speaker_end") {
+      if (event.type === "speaker_start") {
         const advisor = advisors.find((candidate) => candidate.id === event.advisorId);
-        const content = responseTextByAdvisor.get(event.advisorId) ?? ""; 
 
-        if (advisor && content.trim().length > 0) {
-          await saveAdvisorMessage({
+        if (advisor) {
+          const message = await saveAdvisorMessage({
             conversationId: savedConversation.id,
-            advisorId: event.advisorId, 
+            advisorId: event.advisorId,
             provider: advisor.dbProvider,
             turnIndex,
-            content,
+            content: "",
+            status: MessageStatus.streaming,
           });
-          turnIndex += 1; 
-          responseTextByAdvisor.delete(event.advisorId);
+
+          messageIdByAdvisor.set(event.advisorId, message.id);
         }
       }
+
+
+      if (event.type === "token") {
+        const nextContent = `${responseTextByAdvisor.get(event.advisorId) ?? ""}${event.text}`;
+
+        responseTextByAdvisor.set(event.advisorId, nextContent);
+
+        const messageId = messageIdByAdvisor.get(event.advisorId);
+
+        if (messageId) {
+          await updateAdvisorMessage({
+            messageId,
+            content: nextContent,
+          });
+        }
+      }
+
+
+      if (event.type === "speaker_end") {
+        const messageId = messageIdByAdvisor.get(event.advisorId);
+
+        if (messageId) {
+          await markAdvisorMessageStatus(messageId, MessageStatus.complete);
+          messageIdByAdvisor.delete(event.advisorId);
+        }
+
+        responseTextByAdvisor.delete(event.advisorId);
+        turnIndex += 1;
+      }
+
     }
+
+    if (messageIdByAdvisor.size > 0) {
+      const finalStatus = roundController.signal.aborted
+        ? MessageStatus.cancelled
+        : MessageStatus.failed;
+
+      for (const messageId of messageIdByAdvisor.values()) {
+        await markAdvisorMessageStatus(messageId, finalStatus);
+      }
+    }
+
+
 
     if (!clientDisconnected && !res.writableEnded) {
       res.end();

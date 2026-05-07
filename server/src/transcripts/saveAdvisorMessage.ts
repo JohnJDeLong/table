@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma.js";
-import { Provider, SpeakerType } from "../generated/prisma/enums.js";
+import { Provider, SpeakerType, MessageStatus } from "../generated/prisma/enums.js";
 
 type SaveAdvisorMessageInput = {
   conversationId: string;
@@ -7,6 +7,13 @@ type SaveAdvisorMessageInput = {
   provider: Provider;
   turnIndex: number;
   content: string;
+  status?: MessageStatus;
+};
+
+type UpdateAdvisorMessageInput = {
+  messageId: string;
+  content: string;
+  status?: MessageStatus;
 };
 
 export async function saveAdvisorMessage(input: SaveAdvisorMessageInput) {
@@ -18,6 +25,28 @@ export async function saveAdvisorMessage(input: SaveAdvisorMessageInput) {
       provider: input.provider,
       turnIndex: input.turnIndex,
       content: input.content,
+      status: input.status ?? MessageStatus.complete,
     },
   });
 }
+
+export async function updateAdvisorMessage(input: UpdateAdvisorMessageInput) {
+  return prisma.message.update({
+    where: { id: input.messageId },
+    data: {
+      content: input.content,
+      status: input.status,
+    },
+  });
+}
+
+export async function markAdvisorMessageStatus(
+  messageId: string,
+  status: MessageStatus
+) {
+  return prisma.message.update({
+    where: { id: messageId },
+    data: { status },
+  });
+}
+
