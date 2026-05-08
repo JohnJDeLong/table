@@ -1,5 +1,10 @@
 import type { LLMProvider, ProviderMessage, UrgencyRating, ProviderCallOptions } from "../providers/types.js";
 import type { Provider } from "../generated/prisma/enums.js"
+import { UrgencyParseError } from "../providers/parseUrgencyRating.js";
+
+
+
+
 export type Advisor = {
   id: string;
   provider: LLMProvider;
@@ -13,20 +18,37 @@ export type AdvisorUrgencyRating = UrgencyRating & {
 
 export async function rankAdvisorsByUrgency(advisors: Advisor[], conversation: ProviderMessage[], options?: ProviderCallOptions): Promise<AdvisorUrgencyRating[]> {
   const ratingsWithOrder = await Promise.all(
-    advisors.map(async (advisor, order) => {
-      const rating = await advisor.provider.rateUrgency(
-        advisor.systemPrompt,
-        conversation,
-        options
-      );
+  advisors.map(async (advisor, order) => {
+      try {
+        const rating = await advisor.provider.rateUrgency(
+          advisor.systemPrompt,
+          conversation,
+          options
+        );
 
-      return {
-        advisorId: advisor.id,
-        order,
-        ...rating,
-      };
+        return {
+          advisorId: advisor.id,
+          order,
+          ...rating,
+        };
+      } catch (error) {
+        if (error instanceof UrgencyParseError) {
+          console.warn(`Failed to parse urgency rating for ${advisor.id}: ${error.message}`);
+        } else {
+          console.error(`Failed to rate urgency for ${advisor.id}`, error);
+        }
+
+
+        return {
+          advisorId: advisor.id,
+          order,
+          urgency: 0,
+          reason: "Provider was unavailable during urgency rating.",
+        };
+      }
     })
   );
+
 
   return ratingsWithOrder
     .sort((a, b) => b.urgency - a.urgency || a.order - b.order)

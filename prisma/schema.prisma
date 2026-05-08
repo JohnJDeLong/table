@@ -72,7 +72,7 @@ model Workspace {
 
   members         WorkspaceMember[]
   advisorProfiles AdvisorProfile[]
-  boardrooms      Boardroom[]
+  tables          Table[]
   conversations   Conversation[]
 }
 
@@ -113,7 +113,7 @@ model AdvisorProfile {
 
   copiedFrom     AdvisorProfile?    @relation("AdvisorProfileCopies", fields: [copiedFromAdvisorProfileId], references: [id])
   copies         AdvisorProfile[]   @relation("AdvisorProfileCopies")
-  boardrooms     BoardroomAdvisor[]
+  tables         TableAdvisor[]
   urgencyRatings UrgencyRating[]
   roundEvents    RoundEvent[]
 
@@ -122,7 +122,7 @@ model AdvisorProfile {
   @@index([provider])
 }
 
-model Boardroom {
+model Table {
   id               String   @id @default(cuid())
   workspaceId      String
   name             String
@@ -134,15 +134,15 @@ model Boardroom {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  advisors      BoardroomAdvisor[]
+  advisors      TableAdvisor[]
   conversations Conversation[]
 
   @@index([workspaceId])
 }
 
-model BoardroomAdvisor {
+model TableAdvisor {
   id               String   @id @default(cuid())
-  boardroomId      String
+  tableId          String
   advisorProfileId String
   enabled          Boolean  @default(true)
   position         Int
@@ -150,17 +150,17 @@ model BoardroomAdvisor {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  boardroom      Boardroom      @relation(fields: [boardroomId], references: [id], onDelete: Cascade)
+  table          Table          @relation(fields: [tableId], references: [id], onDelete: Cascade)
   advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Cascade)
 
-  @@unique([boardroomId, advisorProfileId])
+  @@unique([tableId, advisorProfileId])
   @@index([advisorProfileId])
 }
 
 model Conversation {
   id            String             @id @default(cuid())
   workspaceId   String
-  boardroomId   String
+  tableId       String
   title         String?
   initialPrompt String
   status        ConversationStatus @default(active)
@@ -169,14 +169,14 @@ model Conversation {
   updatedAt     DateTime           @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  boardroom Boardroom @relation(fields: [boardroomId], references: [id], onDelete: Cascade)
+  table     Table     @relation(fields: [tableId], references: [id], onDelete: Cascade)
 
   messages       Message[]
   urgencyRatings UrgencyRating[]
   roundEvents    RoundEvent[]
 
   @@index([workspaceId])
-  @@index([boardroomId])
+  @@index([tableId])
   @@index([status])
   @@index([createdAt])
 }

@@ -255,7 +255,7 @@ The orchestrator does not yet support:
 - consensus detection
 - adaptive urgency thresholds
 - conversation summarization
-- multi-user boardrooms
+- multi-user tables
 
 
 ## Future extensions

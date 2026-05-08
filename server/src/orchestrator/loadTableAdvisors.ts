@@ -7,7 +7,7 @@ import type { Advisor } from "./rankAdvisorsByUrgency.js";
 import { GeminiAdapter } from "../providers/GeminiAdapter.js";
 import { GrokAdapter } from "../providers/GrokAdapter.js";
 
-const defaultBoardroomId = "seed_boardroom_default";
+const defaultTableId = "seed_table_default";
 
 function createProviderAdapter(provider: Provider): LLMProvider | null {
 
@@ -31,10 +31,10 @@ function createProviderAdapter(provider: Provider): LLMProvider | null {
   return null;
 }
 
-export async function loadBoardroomAdvisors(boardroomId = defaultBoardroomId): Promise<Advisor[]> {
-    const boardroomAdvisors = await prisma.boardroomAdvisor.findMany({
+export async function loadTableAdvisors(tableId = defaultTableId): Promise<Advisor[]> {
+    const tableAdvisors = await prisma.tableAdvisor.findMany({
         where: {
-            boardroomId,
+            tableId,
             enabled: true,
         },
         include: {
@@ -45,8 +45,8 @@ export async function loadBoardroomAdvisors(boardroomId = defaultBoardroomId): P
         },
     });
 
-    return boardroomAdvisors.flatMap((boardroomAdvisor) => {
-        const profile = boardroomAdvisor.advisorProfile;
+    return tableAdvisors.flatMap((tableAdvisor) => {
+        const profile = tableAdvisor.advisorProfile;
         const provider = createProviderAdapter(profile.provider);
 
         if (!provider) {

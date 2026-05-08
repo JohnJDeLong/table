@@ -12,15 +12,15 @@ The shippable, demo-ready version.
 - User interrupt control
 - Chat-like live conversation UI with meeting-minutes PDF export
 - Provider-backed advisor seats for the active providers
-- Future-aware PostgreSQL schema for users, workspaces, boardrooms, advisor profiles, conversations, urgency ratings, and event traces
-- Seeded default user, workspace, boardroom, and four provider-backed advisors for MVP runtime
+- Future-aware PostgreSQL schema for users, workspaces, tables, advisor profiles, conversations, urgency ratings, and event traces
+- Seeded default user, workspace, table, and four provider-backed advisors for MVP runtime
 - Local demo with recorded video
 
 ## Phase 2: Stretch (during MVP window if ahead, or post-bootcamp)
 
 - Custom user-defined personas (advisor editor)
 - Named default advisor personas
-- Multiple boardrooms (Career Council, Project Boardroom, etc.)
+- Multiple tables (Career Council, Project Table, etc.)
 - Deploy to public URL (Vercel + Render + Supabase Postgres)
 - @-mention to call on a specific advisor out of order
 - "Save quote" feature for memorable advisor lines
@@ -28,7 +28,7 @@ The shippable, demo-ready version.
 - CLI interface where advisors work toward consensus and return their strongest shared answer, with Codex and Claude tooling available
 - Cross-interface awareness so different Table surfaces can share relevant user context and data
 - User accounts and authentication
-- Multi-user boardrooms where multiple users can sit in on the same meeting
+- Multi-user tables where multiple users can sit in on the same meeting
 - Free-for-all mode where urgency ordering is turned off and users and advisors can speak freely
 
 ## Phase 3: Future (post-bootcamp ambition)

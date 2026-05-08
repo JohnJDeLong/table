@@ -21,20 +21,36 @@ type ChatMessage = {
   text: string;
 };
 
-const sidebarAdvisors = [
-  { id: "anthropic", name: "Claude", enabled: true },
-  { id: "openai", name: "OpenAI", enabled: true },
-  { id: "gemini", name: "Gemini", enabled: true },
-  { id: "grok", name: "Grok", enabled: true },
-];
+type SidebarAdvisor = {
+  id: string;
+  profileId: string;
+  speakerId: string;
+  name: string;
+  provider: string;
+  enabled: boolean;
+  position: number;
+};
 
-const advisorDisplayNames = Object.fromEntries(
-  sidebarAdvisors.map((advisor) => [advisor.id, advisor.name])
-);
+type SidebarTable = {
+  id: string;
+  name: string;
+  description: string | null;
+  pauseThreshold: number;
+  maxTurnsPerRound: number;
+  advisors: SidebarAdvisor[];
+};
 
-function getSpeakerName(speakerId: string) {
-  return advisorDisplayNames[speakerId] ?? speakerId;
-}
+type SidebarWorkspace = {
+  id: string;
+  name: string;
+  tables: SidebarTable[];
+};
+
+type SidebarData = {
+  workspaces: SidebarWorkspace[];
+};
+
+
 
 
 function App() {
@@ -44,9 +60,44 @@ function App() {
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+
+  
+  const activeWorkspace =
+    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
+    sidebarData?.workspaces[0] ??
+    null;
+
+  const activeTable =
+    activeWorkspace?.tables.find((table) => table.id === selectedTableId) ??
+    activeWorkspace?.tables[0] ??
+    null;
+
+  const sidebarAdvisors = activeTable?.advisors ?? [];
+
+  const advisorDisplayNames = Object.fromEntries(
+    sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
+  );
+
+  function getSpeakerName(speakerId: string) {
+    return advisorDisplayNames[speakerId] ?? speakerId;
+  }
 
   const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    async function loadSidebar() {
+      const res = await fetch("/api/sidebar");
+      const data = await res.json();
+
+      setSidebarData(data);
+    }
+
+    void loadSidebar();
+  }, []);
+
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth"});
@@ -231,25 +282,45 @@ function App() {
           </div>
 
           <details className="workspace-group" open>
-            <summary className="workspace-button">
-              Default Workspace
+            <summary
+              className={`workspace-button ${
+                activeWorkspace ? "workspace-button--active" : ""
+              }`}
+            >
+              {activeWorkspace?.name ?? "Loading workspace"}
             </summary>
 
             <div className="room-list">
               <div className="sidebar-section-header sidebar-section-header--nested">
-                <span>Boardrooms</span>
+                <span>Tables</span>
                 <button
                   type="button"
                   className="icon-button"
-                  aria-label="Add boardroom"
+                  aria-label="Add table"
                 >
                   +
                 </button>
               </div>
 
-              <button type="button" className="room-item room-item--active">
-                Default Boardroom
+              <button
+                type="button"
+                className={`room-item ${activeTable?.id === selectedTableId || (!selectedTableId && activeTable)
+                  ? "room-item--active"
+                  : ""
+                }`}
+                onClick={() => {
+                  if (activeWorkspace) {
+                    setSelectedWorkspaceId(activeWorkspace.id);
+                  }
+
+                  if (activeTable) {
+                    setSelectedTableId(activeTable.id);
+                  }
+                }}
+              >
+                {activeTable?.name ?? "Loading table"}
               </button>
+
 
               <div className="advisor-list">
                 <div className="sidebar-section-header sidebar-section-header--nested">
@@ -265,7 +336,7 @@ function App() {
 
                 {sidebarAdvisors.map((advisor) => {
                   const rating = urgencyRatings.find(
-                    (item) => item.advisorId === advisor.id
+                    (item) => item.advisorId === advisor.speakerId
                   );
                   const urgencyOpacity = rating
                     ? Math.max(0.12, rating.urgency / 10)

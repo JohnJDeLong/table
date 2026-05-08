@@ -60,16 +60,16 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Install and configure Prisma
 - [x] Use PostgreSQL as the persistence layer
 - [x] Use Supabase Postgres for hosted database
-- [x] Write future-aware Prisma schema for users, workspaces, boardrooms, advisor profiles, conversations, messages, urgency ratings, and round events
-- [x] Seed default user, workspace, boardroom, and four provider-backed advisor profiles
+- [x] Write future-aware Prisma schema for users, workspaces, tables, advisor profiles, conversations, messages, urgency ratings, and round events
+- [x] Seed default user, workspace, table, and four provider-backed advisor profiles
 - [x] Run the first migration
 - [x] Save conversations, messages, and Table round events
 - [x] Capture urgency scores in persisted round event payloads
 - [x] Commit
 
-## Block 7.5: DB-backed boardroom runtime — Complete
+## Block 7.5: DB-backed table runtime — Complete
 
-- [x] Load enabled advisors from the seeded default boardroom
+- [x] Load enabled advisors from the seeded default table
 - [x] Convert `AdvisorProfile` rows into runtime `Advisor` objects
 - [x] Keep unsupported providers disabled until their adapters exist
 - [x] Remove the hardcoded advisor list from `server/src/index.ts`
@@ -80,7 +80,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Chat-like live room for the advisor discussion
 - [x] Bottom composer for sending the next user message
 - [x] Speaker labels with role and color accent
-- [x] Sidebar shape for workspaces, boardrooms, advisor standing, settings, and profile
+- [x] Sidebar shape for workspaces, tables, advisor standing, settings, and profile
 - [x] Message stream that feels familiar like texting while staying focused on decision work
 - [x] Auto-scroll to newest message
 - [x] Continue the current backend conversation when the user sends follow-up prompts
@@ -95,8 +95,8 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Verify current Gemini model identifiers before hardcoding them
 - [x] Install the Google/Gemini SDK
 - [x] Add `GeminiAdapter` behind the existing `LLMProvider` interface
-- [x] Wire Gemini into `loadBoardroomAdvisors`
-- [x] Enable Gemini in the default boardroom once the adapter works
+- [x] Wire Gemini into `loadTableAdvisors`
+- [x] Enable Gemini in the default table once the adapter works
 - [x] Test `/api/urgency-test` and `/api/round-test` with Gemini active
 - [ ] Commit
 
@@ -107,8 +107,8 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Verify current Grok model identifiers before hardcoding them
 - [x] Reuse the existing OpenAI SDK with xAI `baseURL`
 - [x] Add `GrokAdapter` behind the existing `LLMProvider` interface
-- [x] Wire Grok into `loadBoardroomAdvisors`
-- [x] Enable Grok in the default boardroom once the adapter works
+- [x] Wire Grok into `loadTableAdvisors`
+- [x] Enable Grok in the default table once the adapter works
 - [x] Test `/api/urgency-test` with Grok active
 - [x] Test all four providers from the UI
 - [ ] Run final server/client builds
@@ -116,9 +116,16 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 10: All-provider end-to-end + conversation hygiene
 
-- [ ] Confirm active providers participate through the database-backed boardroom runtime
+### Current focus: room behavior cleanup
+
+- [X] Harden urgency rating so hidden routing calls reliably return JSON
+- [ ] Treat failed urgency parsing as silent without noisy user-visible behavior
+- [ ] Add directed-advisor routing using table advisor display names/handles so prompts like "Sue..." or "Claude..." prioritize the named advisor
+- [ ] Hide empty advisor bubbles and handle per-advisor stream failures gracefully
+- [ ] Strengthen advisor room prompts so advisors do not explain routing mechanics or claim they are alone
+
+- [ ] Confirm active providers participate through the database-backed table runtime
 - [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
-- [ ] Tune advisor prompts/routing to preserve useful convergence while reducing low-value repetition
 - [ ] Load a saved conversation on app reload
 - [ ] Align UI, database, and provider conversation history so they share one source of truth
 - [ ] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
@@ -133,16 +140,21 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Add login page
 - [ ] Add logout behavior
 - [ ] Map authenticated users to `User` records
+- [ ] Load the authenticated user's recent conversations from the database
+- [ ] Let users reopen an existing conversation after refresh or login
 - [ ] Enforce workspace membership with `WorkspaceMember`
 - [ ] Add basic profile view/edit behavior
 - [ ] Commit
 
-## Block 12: Real workspace, boardroom, and advisor controls
+## Block 12: Real workspace, table, and advisor controls
 
-- [ ] Load sidebar workspaces, boardrooms, and advisors from the API instead of hardcoding them
+- [ ] Load sidebar workspaces, tables, and advisors from the API instead of hardcoding them
 - [ ] API-back sidebar provider indicators so enabled/disabled advisor state reflects the database
+- [ ] Treat sidebar data as server state: initial `loadSidebar()` on app mount, then refresh after workspace/table/advisor create, edit, or delete
+- [ ] Ask whether to keep manual `loadSidebar()` refreshes for MVP or introduce TanStack Query with mutation invalidation
+- [ ] Later: consider optimistic sidebar updates after mutations if the CRUD flow feels too slow
 - [ ] Add real behavior for workspace `+`
-- [ ] Add real behavior for boardroom `+`
+- [ ] Add real behavior for table `+`
 - [ ] Add real behavior for advisor `+`
 - [ ] Add basic edit/delete behavior where needed
 - [ ] Commit
@@ -152,7 +164,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Design the custom advisor/persona prompt builder
 - [ ] Let users create user-owned advisor profiles
 - [ ] Let users edit their own advisor prompts/config
-- [ ] Let users add or remove their advisors from boardrooms
+- [ ] Let users add or remove their advisors from tables
 - [ ] Keep workspace-owned advisors visible but permission-controlled
 - [ ] Commit
 
@@ -169,4 +181,4 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [ ] Deploy to a public URL
 - [ ] Add @-mention to call on a specific advisor out of order
-- [ ] Add custom boardroom templates
+- [ ] Add custom table templates
