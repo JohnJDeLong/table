@@ -1,5 +1,17 @@
 import type { UrgencyRating } from "./types.js";
 
+
+export class UrgencyParseError extends Error {
+  rawText: string;
+
+  constructor(message: string, rawText: string) {
+    super(message);
+    this.name = "UrgencyParseError";
+    this.rawText = rawText;
+  }
+}
+
+
 export function parseUrgencyRating(rawText: string): UrgencyRating {
   const trimmed = rawText.trim();
 
@@ -13,7 +25,9 @@ export function parseUrgencyRating(rawText: string): UrgencyRating {
   const jsonEnd = withoutCodeFence.lastIndexOf("}");
 
   if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) {
-    throw new Error(`Urgency rating did not include JSON: ${rawText}`);
+    throw new UrgencyParseError("Urgency rating did not include JSON.", rawText);
+
+
   }
 
   const parsed = JSON.parse(

@@ -116,9 +116,16 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 ## Block 10: All-provider end-to-end + conversation hygiene
 
+### Current focus: room behavior cleanup
+
+- [X] Harden urgency rating so hidden routing calls reliably return JSON
+- [ ] Treat failed urgency parsing as silent without noisy user-visible behavior
+- [ ] Add directed-advisor routing using table advisor display names/handles so prompts like "Sue..." or "Claude..." prioritize the named advisor
+- [ ] Hide empty advisor bubbles and handle per-advisor stream failures gracefully
+- [ ] Strengthen advisor room prompts so advisors do not explain routing mechanics or claim they are alone
+
 - [ ] Confirm active providers participate through the database-backed table runtime
 - [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
-- [ ] Tune advisor prompts/routing to preserve useful convergence while reducing low-value repetition
 - [ ] Load a saved conversation on app reload
 - [ ] Align UI, database, and provider conversation history so they share one source of truth
 - [ ] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
@@ -133,6 +140,8 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Add login page
 - [ ] Add logout behavior
 - [ ] Map authenticated users to `User` records
+- [ ] Load the authenticated user's recent conversations from the database
+- [ ] Let users reopen an existing conversation after refresh or login
 - [ ] Enforce workspace membership with `WorkspaceMember`
 - [ ] Add basic profile view/edit behavior
 - [ ] Commit

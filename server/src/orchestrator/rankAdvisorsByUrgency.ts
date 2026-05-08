@@ -1,5 +1,10 @@
 import type { LLMProvider, ProviderMessage, UrgencyRating, ProviderCallOptions } from "../providers/types.js";
 import type { Provider } from "../generated/prisma/enums.js"
+import { UrgencyParseError } from "../providers/parseUrgencyRating.js";
+
+
+
+
 export type Advisor = {
   id: string;
   provider: LLMProvider;
@@ -27,7 +32,12 @@ export async function rankAdvisorsByUrgency(advisors: Advisor[], conversation: P
           ...rating,
         };
       } catch (error) {
-        console.error(`Failed to rate urgency for ${advisor.id}`, error);
+        if (error instanceof UrgencyParseError) {
+          console.warn(`Failed to parse urgency rating for ${advisor.id}: ${error.message}`);
+        } else {
+          console.error(`Failed to rate urgency for ${advisor.id}`, error);
+        }
+
 
         return {
           advisorId: advisor.id,
