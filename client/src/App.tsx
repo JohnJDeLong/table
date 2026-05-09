@@ -45,16 +45,11 @@ function App() {
   activeTable,
   sidebarAdvisors,
   selectActiveTable,
+  getSpeakerName,
 } = useSidebarData();
   
 
-  const advisorDisplayNames = Object.fromEntries(
-    sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
-  );
-
-  function getSpeakerName(speakerId: string) {
-    return advisorDisplayNames[speakerId] ?? speakerId;
-  }
+ 
 
   const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);

@@ -29,6 +29,14 @@ export function useSidebarData() {
 
   const sidebarAdvisors = activeTable?.advisors ?? [];
 
+  const advisorDisplayNames = Object.fromEntries(
+    sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
+  );
+
+  function getSpeakerName(speakerId: string) {
+    return advisorDisplayNames[speakerId] ?? speakerId;
+  }
+
   function selectActiveTable() {
     if (activeWorkspace) {
       setSelectedWorkspaceId(activeWorkspace.id);
@@ -40,11 +48,11 @@ export function useSidebarData() {
   }
 
   return {
-    sidebarData,
     activeWorkspace,
     activeTable,
     sidebarAdvisors,
     selectActiveTable,
+    getSpeakerName,
   };
 }
 
