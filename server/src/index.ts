@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "./config/env.js";
+
 
 import { sidebarRouter } from "./routes/sidebarRoutes.js";
 import { diagnosticRouter } from "./routes/diagnosticRoutes.js";
@@ -9,8 +10,6 @@ import { conversationMessageRouter } from "./routes/conversationMessageRoutes.js
 import { healthRouter } from "./routes/healthRoutes.js";
 
 
-
-dotenv.config({ path: '../.env' }); 
 
 const app = express(); 
 const port = Number(process.env.PORT) || 3001; 
