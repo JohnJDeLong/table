@@ -11,173 +11,172 @@ export function useConversationRound() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   async function sendPrompt(prompt: string) {
-  if (isLoading) {
-    return;
-  }
+    if (isLoading) {
+      return;
+    }
 
-  const submittedPrompt = prompt.trim();
+    const submittedPrompt = prompt.trim();
 
-  if (!submittedPrompt) {
-    return;
-  }
+    if (!submittedPrompt) {
+      return;
+    }
 
-  setUrgencyRatings([]);
+    setUrgencyRatings([]);
 
-  setMessages((current) => [
-    ...current,
-    {
-      id: crypto.randomUUID(),
-      speakerId: "User",
-      speakerType: "user",
-      text: submittedPrompt,
-    },
-  ]);
-
-  setIsLoading(true);
-  setResponse({ text: "" });
-
-  const abortController = new AbortController();
-  abortControllerRef.current = abortController;
-
-  try {
-    const res = await fetch("/api/conversations/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    setMessages((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        speakerId: "User",
+        speakerType: "user",
+        text: submittedPrompt,
       },
-      body: JSON.stringify({ prompt: submittedPrompt, conversationId }),
-      signal: abortController.signal,
-    });
+    ]);
 
-    if (!res.body) {
-      setResponse({ text: "", error: "No response stream returned." });
-      return;
-    }
+    setIsLoading(true);
+    setResponse({ text: "" });
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
-    while (true) {
-      const { value, done } = await reader.read();
+    try {
+      const res = await fetch("/api/conversations/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: submittedPrompt, conversationId }),
+        signal: abortController.signal,
+      });
 
-      if (done) {
-        break;
+      if (!res.body) {
+        setResponse({ text: "", error: "No response stream returned." });
+        return;
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      const events = buffer.split("\n\n");
-      buffer = events.pop() ?? "";
+      while (true) {
+        const { value, done } = await reader.read();
 
-      for (const eventText of events) {
-        const parsedEvent = parseSseEvent(eventText);
-
-        if (!parsedEvent) {
-          continue;
+        if (done) {
+          break;
         }
 
-        const { eventName, data } = parsedEvent;
-        const eventData = data as {
-          conversationId?: string;
-          scores?: UrgencyRating[];
-          advisorId?: string;
-          text?: string;
-          message?: string;
-        };
+        buffer += decoder.decode(value, { stream: true });
 
-        if (eventName === "conversation_ready" && eventData.conversationId) {
-          setConversationId(eventData.conversationId);
-        }
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
 
-        if (eventName === "urgency_scores" && eventData.scores) {
-          setUrgencyRatings(eventData.scores);
-        }
+        for (const eventText of events) {
+          const parsedEvent = parseSseEvent(eventText);
 
-        if (eventName === "speaker_start" && eventData.advisorId) {
-          const advisorId = eventData.advisorId;
+          if (!parsedEvent) {
+            continue;
+          }
 
-          setMessages((current) => [
-            ...current,
-            {
-              id: crypto.randomUUID(),
-              speakerId: advisorId,
-              speakerType: "advisor",
+          const { eventName, data } = parsedEvent;
+          const eventData = data as {
+            conversationId?: string;
+            scores?: UrgencyRating[];
+            advisorId?: string;
+            text?: string;
+            message?: string;
+          };
+
+          if (eventName === "conversation_ready" && eventData.conversationId) {
+            setConversationId(eventData.conversationId);
+          }
+
+          if (eventName === "urgency_scores" && eventData.scores) {
+            setUrgencyRatings(eventData.scores);
+          }
+
+          if (eventName === "speaker_start" && eventData.advisorId) {
+            const advisorId = eventData.advisorId;
+
+            setMessages((current) => [
+              ...current,
+              {
+                id: crypto.randomUUID(),
+                speakerId: advisorId,
+                speakerType: "advisor",
+                text: "",
+              },
+            ]);
+          }
+
+          if (eventName === "token" && eventData.advisorId && eventData.text) {
+            const advisorId = eventData.advisorId;
+            const text = eventData.text;
+
+            setMessages((current) => {
+              const next = [...current];
+              const lastMessage = next[next.length - 1];
+
+              if (
+                !lastMessage ||
+                lastMessage.speakerType !== "advisor" ||
+                lastMessage.speakerId !== advisorId
+              ) {
+                return [
+                  ...next,
+                  {
+                    id: crypto.randomUUID(),
+                    speakerId: advisorId,
+                    speakerType: "advisor",
+                    text,
+                  },
+                ];
+              }
+
+              next[next.length - 1] = {
+                ...lastMessage,
+                text: `${lastMessage.text}${text}`,
+              };
+
+              return next;
+            });
+          }
+
+          if (eventName === "error" && eventData.message) {
+            setResponse({
               text: "",
-            },
-          ]);
-        }
-
-        if (eventName === "token" && eventData.advisorId && eventData.text) {
-          const advisorId = eventData.advisorId;
-          const text = eventData.text;
-
-          setMessages((current) => {
-            const next = [...current];
-            const lastMessage = next[next.length - 1];
-
-            if (
-              !lastMessage ||
-              lastMessage.speakerType !== "advisor" ||
-              lastMessage.speakerId !== advisorId
-            ) {
-              return [
-                ...next,
-                {
-                  id: crypto.randomUUID(),
-                  speakerId: advisorId,
-                  speakerType: "advisor",
-                  text,
-                },
-              ];
-            }
-
-            next[next.length - 1] = {
-              ...lastMessage,
-              text: `${lastMessage.text}${text}`,
-            };
-
-            return next;
-          });
-        }
-
-        if (eventName === "error" && eventData.message) {
-          setResponse({
-            text: "",
-            error: eventData.message,
-          });
+              error: eventData.message,
+            });
+          }
         }
       }
-    }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      return;
-    }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
 
-    setResponse({ text: "", error: "Failed to stream response." });
-  } finally {
-    setIsLoading(false);
-    abortControllerRef.current = null;
+      setResponse({ text: "", error: "Failed to stream response." });
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
   }
-}
-
 
   async function stopRound() {
-  if (conversationId) {
-    await fetch(`/api/conversations/${conversationId}/stop`, {
-      method: "POST",
-    });
+    if (conversationId) {
+      await fetch(`/api/conversations/${conversationId}/stop`, {
+        method: "POST",
+      });
+    }
+
+    abortControllerRef.current?.abort();
   }
 
-  abortControllerRef.current?.abort();
-}
-
   return {
-  response,
-  isLoading,
-  urgencyRatings,
-  messages,
-  stopRound,
-  sendPrompt,
-};
+    response,
+    isLoading,
+    urgencyRatings,
+    messages,
+    stopRound,
+    sendPrompt,
+  };
 }

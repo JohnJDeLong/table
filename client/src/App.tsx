@@ -6,10 +6,9 @@ import { Sidebar } from "./components/Sidebar";
 import { useSidebarData } from "./hooks/useSidebarData";
 import { useConversationRound } from "./hooks/useConversationRound";
 
-
 function App() {
   const [prompt, setPrompt] = useState("");
-  
+
   const {
     response,
     isLoading,
@@ -27,17 +26,12 @@ function App() {
     getSpeakerName,
   } = useSidebarData();
 
-  
-
-
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
     await sendPrompt(prompt);
     setPrompt("");
   }
-
-
 
   return (
     <main className="app-shell">
