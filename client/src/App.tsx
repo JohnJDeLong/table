@@ -5,6 +5,7 @@ import { MessageThread } from "./components/MessageThread";
 import { Sidebar } from "./components/Sidebar";
 import { useSidebarData } from "./hooks/useSidebarData";
 import type { ChatMessage, StreamState, UrgencyRating } from "./types/chat";
+import { parseSseEvent } from "./utils/parseSseEvent";
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -86,42 +87,46 @@ function App() {
         buffer = events.pop() ?? "";
 
         for (const eventText of events) {
-          const eventLine = eventText
-            .split("\n")
-            .find((line) => line.startsWith("event: "));
+          const parsedEvent = parseSseEvent(eventText);
 
-          const dataLine = eventText
-            .split("\n")
-            .find((line) => line.startsWith("data: "));
+            if (!parsedEvent) {
+              continue;
+            }
 
-          if (!eventLine || !dataLine) {
-            continue;
+            const { eventName, data } = parsedEvent;
+            const eventData = data as {
+              conversationId?: string;
+              scores?: UrgencyRating[];
+              advisorId?: string;
+              text?: string;
+              message?: string;
+            };
+
+
+          if (eventName === "conversation_ready" && eventData.conversationId) {
+            setConversationId(eventData.conversationId);
           }
 
-          const eventName = eventLine.replace("event: ", "");
-          const data = JSON.parse(dataLine.replace("data: ", ""));
-
-          if (eventName === "conversation_ready") {
-            setConversationId(data.conversationId);
+          if (eventName === "urgency_scores" && eventData.scores) {
+            setUrgencyRatings(eventData.scores);
           }
 
-          if (eventName === "urgency_scores") {
-            setUrgencyRatings(data.scores);
-          }
-
-          if (eventName === "speaker_start") {
+          if (eventName === "speaker_start" && eventData.advisorId) {
+            const advisorId = eventData.advisorId; 
             setMessages((current) => [
               ...current,
               {
                 id: crypto.randomUUID(),
-                speakerId: data.advisorId,
+                speakerId: advisorId,
                 speakerType: "advisor",
                 text: "",
               },
             ]);
           }
 
-          if (eventName === "token") {
+          if (eventName === "token" && eventData.advisorId && eventData.text) {
+            const advisorId = eventData.advisorId;
+            const text = eventData.text;
             setMessages((current) => {
               const next = [...current];
               const lastMessage = next[next.length - 1];
@@ -129,22 +134,22 @@ function App() {
               if (
                 !lastMessage ||
                 lastMessage.speakerType !== "advisor" ||
-                lastMessage.speakerId !== data.advisorId
+                lastMessage.speakerId !== advisorId
               ) {
                 return [
                   ...next,
                   {
                     id: crypto.randomUUID(),
-                    speakerId: data.advisorId,
+                    speakerId: advisorId,
                     speakerType: "advisor",
-                    text: data.text,
+                    text,
                   },
                 ];
               }
 
               next[next.length - 1] = {
                 ...lastMessage,
-                text: `${lastMessage.text}${data.text}`,
+                text: `${lastMessage.text}${text}`,
               };
 
               return next;
@@ -154,7 +159,7 @@ function App() {
           if (eventName === "error") {
             setResponse({
               text: "",
-              error: data.message,
+              error: eventData.message,
             });
           }
         }
