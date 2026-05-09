@@ -19,18 +19,15 @@ app.use(cors({ origin: 'http://localhost:5173'}));
 app.use(express.json())
 
 
-
+app.use("/api/health", healthRouter);
 app.use('/api/sidebar', sidebarRouter);
-
-
-
+app.use("/api/diagnostics", diagnosticRouter);
 app.use("/api/conversations", conversationRouter);
-
 app.use('/api/conversations', conversationMessageRouter);
 
-app.use("/api/health", healthRouter);
 
-app.use("/api/diagnostics", diagnosticRouter);
+
+
 
 
 
