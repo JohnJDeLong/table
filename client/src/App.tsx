@@ -29,8 +29,10 @@ function App() {
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await sendPrompt(prompt);
+    const submittedPrompt = prompt;
     setPrompt("");
+
+    await sendPrompt(submittedPrompt);
   }
 
   return (
