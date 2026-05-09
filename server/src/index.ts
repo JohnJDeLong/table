@@ -17,6 +17,7 @@ import { loadTableAdvisors } from "./orchestrator/loadTableAdvisors.js";
 import { saveUserMessage } from "./transcripts/saveUserMessage.js";
 import { loadProviderConversation } from "./transcripts/loadProviderConversation.js";
 import { sidebarRouter } from "./routes/sidebarRoutes.js";
+import { diagnosticRouter } from "./routes/diagnosticRoutes.js";
 
 
 
@@ -53,62 +54,12 @@ app.get("/api/health", (_req, res) => {
 });
 
 //smoke test route 
-app.get("/api/db-test", async (_req, res) => {
-  try {
-    const [userCount, workspaceCount, tableCount, advisorCount, conversationCount, messageCount, roundEventCount] =
-      await Promise.all([
-        prisma.user.count(),
-        prisma.workspace.count(),
-        prisma.table.count(),
-        prisma.advisorProfile.count(),
-        prisma.conversation.count(),
-        prisma.message.count(),
-        prisma.roundEvent.count(),
 
-      ]);
-
-    res.json({
-      ok: true,
-      userCount,
-      workspaceCount,
-      tableCount,
-      advisorCount,
-      conversationCount,
-      messageCount,
-      roundEventCount,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to query database" });
-  }
-});
 
 app.use('/api/sidebar', sidebarRouter);
 
+app.use('/api', diagnosticRouter);
 
-app.post("/api/urgency-test", async (req, res) => {
-  try {
-    const prompt =
-      typeof req.body.prompt === "string" && req.body.prompt.trim().length > 0
-        ? req.body.prompt
-        : "Should I respond to this conversation?";
-
-    const conversation: ProviderMessage[] = Array.isArray(req.body.conversation)
-      ? req.body.conversation
-      : [{ role: "user", content: prompt }];
-    
-    const advisors = await loadTableAdvisors();
-
-    const ratings = await rankAdvisorsByUrgency(advisors, conversation);
-
-    res.json({ ratings });
-
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to rate urgency" });
-  }
-});
 
 
 app.post("/api/conversations/:conversationId/stop", (req, res) => {
