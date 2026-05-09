@@ -1,450 +1,73 @@
-import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent, } from 'react';
-import './App.css';
-
-type StreamState = { 
-  text: string;
-  error?: string;
-};
-
-
-
-type UrgencyRating = {
-  advisorId: string;
-  urgency: number;
-  reason: string;
-};
-
-type ChatMessage = {
-  id: string;
-  speakerId: string;
-  speakerType: "user" | "advisor";
-  text: string;
-};
-
-type SidebarAdvisor = {
-  id: string;
-  profileId: string;
-  speakerId: string;
-  name: string;
-  provider: string;
-  enabled: boolean;
-  position: number;
-};
-
-type SidebarTable = {
-  id: string;
-  name: string;
-  description: string | null;
-  pauseThreshold: number;
-  maxTurnsPerRound: number;
-  advisors: SidebarAdvisor[];
-};
-
-type SidebarWorkspace = {
-  id: string;
-  name: string;
-  tables: SidebarTable[];
-};
-
-type SidebarData = {
-  workspaces: SidebarWorkspace[];
-};
-
-
-
+import { useState, type SyntheticEvent } from "react";
+import "./App.css";
+import { Composer } from "./components/Composer";
+import { MessageThread } from "./components/MessageThread";
+import { Sidebar } from "./components/Sidebar";
+import { useSidebarData } from "./hooks/useSidebarData";
+import { useConversationRound } from "./hooks/useConversationRound";
 
 function App() {
-  const [prompt, setPrompt] = useState (""); 
-  const [response, setResponse] = useState<StreamState | null>(null); 
-  const [isLoading, setIsLoading] = useState(false); 
-  const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState("");
 
-  
-  const activeWorkspace =
-    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
-    sidebarData?.workspaces[0] ??
-    null;
+  const {
+    response,
+    isLoading,
+    urgencyRatings,
+    messages,
+    sendPrompt,
+    stopRound,
+  } = useConversationRound();
 
-  const activeTable =
-    activeWorkspace?.tables.find((table) => table.id === selectedTableId) ??
-    activeWorkspace?.tables[0] ??
-    null;
-
-  const sidebarAdvisors = activeTable?.advisors ?? [];
-
-  const advisorDisplayNames = Object.fromEntries(
-    sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
-  );
-
-  function getSpeakerName(speakerId: string) {
-    return advisorDisplayNames[speakerId] ?? speakerId;
-  }
-
-  const threadEndRef = useRef<HTMLDivElement | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  useEffect(() => {
-    async function loadSidebar() {
-      const res = await fetch("/api/sidebar");
-      const data = await res.json();
-
-      setSidebarData(data);
-    }
-
-    void loadSidebar();
-  }, []);
-
-
-  useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: "smooth"});
-  }, [messages]);
+  const {
+    activeWorkspace,
+    activeTable,
+    sidebarAdvisors,
+    selectActiveTable,
+    getSpeakerName,
+  } = useSidebarData();
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
-    
-    
-    event.preventDefault();// prevents entire page reload 
+    event.preventDefault();
 
-    if (isLoading) {
-      return;
-    }
+    const submittedPrompt = prompt;
+    setPrompt("");
 
-    const submittedPrompt = prompt.trim(); 
-
-    if (!submittedPrompt) {
-      return; 
-    }
-
-    setPrompt(''); 
-    setUrgencyRatings([]);
-
-    setMessages((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        speakerId: "User",
-        speakerType: "user",
-        text: submittedPrompt,
-      },
-    ]);
-
-
-    setIsLoading(true); // ui will use this to disable submit button and render loading indicator. 
-    setResponse({ text: '' });// starts a fresh streamed response 
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-
-
-    try {
-      //post request made to front end that get forwarded to backend via configured proxy 
-      const res = await fetch('/api/round-test', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: submittedPrompt, conversationId }),
-        signal: abortController.signal,
-      }); 
-
-      if(!res.body) {
-        setResponse({ text: "", error: "No response stream returned."});
-        return; 
-      }
-      const reader = res.body.getReader(); 
-      const decoder = new TextDecoder(); 
-      let buffer = "";
-      while (true) {
-        const { value, done } = await reader.read(); 
-
-        if (done) {
-          break; 
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
-        
-        for (const eventText of events) {
-          const eventLine = eventText
-            .split('\n')
-            .find((line) => line.startsWith('event: '));
-          
-          const dataLine = eventText
-            .split('\n')
-            .find((line) => line.startsWith('data: '));
-          
-          if(!eventLine || !dataLine) {
-            continue;
-          }
-          
-          const eventName = eventLine.replace("event: ", "");
-          const data = JSON.parse(dataLine.replace("data: ", ''));
-          
-          if (eventName === "conversation_ready") {
-            setConversationId(data.conversationId);
-          }
-
-          if (eventName === "urgency_scores") {
-            setUrgencyRatings(data.scores);
-          }
-
-          if (eventName === "speaker_start") {
-            setMessages((current) => [
-              ...current,
-              {
-                id: crypto.randomUUID(),
-                speakerId: data.advisorId,
-                speakerType: "advisor",
-                text: "",
-              },
-            ]);
-          }
-
-          if (eventName === "token") {
-            setMessages((current) => {
-              const next = [...current];
-              const lastMessage = next[next.length - 1];
-
-              if (!lastMessage || lastMessage.speakerType !== 'advisor'|| lastMessage.speakerId !== data.advisorId) {
-                return [
-                  ...next,
-                  {
-                    id: crypto.randomUUID(),
-                    speakerId: data.advisorId,
-                    speakerType: "advisor",
-                    text: data.text,
-                  },
-                ];
-              }
-
-              next[next.length - 1] = {
-                ...lastMessage,
-                text: `${lastMessage.text}${data.text}`,
-              };
-
-              return next;
-            });
-          }
-
-          if (eventName === "error") {
-            setResponse({
-              text: "",
-              error: data.message,
-            });
-          }
-
-        }
-        
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-
-      setResponse({ text: "", error: "Failed to stream response." });
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
+    await sendPrompt(submittedPrompt);
   }
 
-  async function handleStop() {
-    if(conversationId) {
-      await fetch (`/api/conversations/${conversationId}/stop`, {
-        method: "POST",
-      })
-    }
-    abortControllerRef.current?.abort();
-  }
+  return (
+    <main className="app-shell">
+      <Sidebar
+        activeWorkspace={activeWorkspace}
+        activeTable={activeTable}
+        sidebarAdvisors={sidebarAdvisors}
+        urgencyRatings={urgencyRatings}
+        selectActiveTable={selectActiveTable}
+      />
+      <section className="room-shell">
+        <header className="room-header">
+          <h1 className="room-title">Table</h1>
+          <p className="room-subtitle">
+            A live room for multi-advisor decisions.
+          </p>
+        </header>
 
-
- return (
-  <main className="app-shell">
-    <aside className="sidebar">
-      <div>
-        <div className="sidebar-brand">Table</div>
-
-        <section className="sidebar-section">
-          <div className="sidebar-section-header">
-            <span>Workspaces</span>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Add workspace"
-            >
-              +
-            </button>
-          </div>
-
-          <details className="workspace-group" open>
-            <summary
-              className={`workspace-button ${
-                activeWorkspace ? "workspace-button--active" : ""
-              }`}
-            >
-              {activeWorkspace?.name ?? "Loading workspace"}
-            </summary>
-
-            <div className="room-list">
-              <div className="sidebar-section-header sidebar-section-header--nested">
-                <span>Tables</span>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label="Add table"
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className={`room-item ${activeTable?.id === selectedTableId || (!selectedTableId && activeTable)
-                  ? "room-item--active"
-                  : ""
-                }`}
-                onClick={() => {
-                  if (activeWorkspace) {
-                    setSelectedWorkspaceId(activeWorkspace.id);
-                  }
-
-                  if (activeTable) {
-                    setSelectedTableId(activeTable.id);
-                  }
-                }}
-              >
-                {activeTable?.name ?? "Loading table"}
-              </button>
-
-
-              <div className="advisor-list">
-                <div className="sidebar-section-header sidebar-section-header--nested">
-                  <span>Advisors</span>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Add advisor"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {sidebarAdvisors.map((advisor) => {
-                  const rating = urgencyRatings.find(
-                    (item) => item.advisorId === advisor.speakerId
-                  );
-                  const urgencyOpacity = rating
-                    ? Math.max(0.12, rating.urgency / 10)
-                    : 0.12;
-                  const tooltipText = rating
-                    ? `${rating.urgency}/10 - ${rating.reason}`
-                    : advisor.enabled
-                      ? "No rating yet"
-                      : "Disabled";
-
-                  return (
-                    <div
-                      className={`advisor-row ${
-                        advisor.enabled
-                          ? "advisor-row--online"
-                          : "advisor-row--disabled"
-                      }`}
-                      key={advisor.id}
-                    >
-                      <div className="advisor-meta">
-                        <span className="advisor-name">{advisor.name}</span>
-                      </div>
-                      <span
-                        aria-label={`${advisor.name}: ${tooltipText}`}
-                        className="advisor-urgency-dot"
-                        data-tooltip={tooltipText}
-                        style={
-                          advisor.enabled
-                            ? ({ "--urgency-opacity": urgencyOpacity } as CSSProperties)
-                            : undefined
-                        }
-                        tabIndex={0}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </details>
-        </section>
-      </div>
-
-      <div className="sidebar-footer">
-        <button type="button" className="footer-button">
-          Settings
-        </button>
-        <button type="button" className="footer-button">
-          Profile
-        </button>
-      </div>
-    </aside>
-
-
-    <section className="room-shell">
-      <header className="room-header">
-        <h1 className="room-title">Table</h1>
-        <p className="room-subtitle">
-          A live room for multi-advisor decisions.
-        </p>
-      </header>
-
-      <section className="room-thread">
-        {messages.map((message) => (
-          <article
-            className={`message-block message-block--${message.speakerType}`}
-            key={message.id}
-          >
-            <p className="speaker">{getSpeakerName(message.speakerId)}</p>
-            <p className="message-text">{message.text}</p>
-          </article>
-        ))}
-
-        {response?.error && (
-          <article className="message-block message-block--error">
-            <p className="speaker">Error</p>
-            <p className="message-text">{response.error}</p>
-          </article>
-        )}
-        <div ref={threadEndRef} />
-      </section>
-
-      <form className="composer" onSubmit={handleSubmit}>
-        <label htmlFor="prompt">Prompt</label>
-        <textarea
-          id="prompt"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }
-          }}
+        <MessageThread
+          messages={messages}
+          response={response}
+          getSpeakerName={getSpeakerName}
         />
 
-
-        <button
-          type={isLoading ? "button" : "submit"}
-          onClick={isLoading ? handleStop : undefined}
-        >
-          {isLoading ? "Stop" : "Ask"}
-        </button>
-      </form>
-    </section>
-  </main>
-);
-
-
+        <Composer
+          prompt={prompt}
+          isLoading={isLoading}
+          onPromptChange={setPrompt}
+          onSubmit={handleSubmit}
+          onStop={stopRound}
+        />
+      </section>
+    </main>
+  );
 }
 
-export default App; 
+export default App;

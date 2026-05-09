@@ -52,13 +52,9 @@ Why SSE:
 - ordered message delivery
 - low infrastructure complexity
 
-Target SSE endpoint:
+Current SSE endpoint:
 
-POST /api/conversations/:id/messages
-
-Current MVP test endpoint:
-
-POST /api/round-test
+POST /api/conversations/messages
 
 
 ## Event format
