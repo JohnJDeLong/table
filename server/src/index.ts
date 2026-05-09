@@ -18,6 +18,8 @@ import { saveUserMessage } from "./transcripts/saveUserMessage.js";
 import { loadProviderConversation } from "./transcripts/loadProviderConversation.js";
 import { sidebarRouter } from "./routes/sidebarRoutes.js";
 import { diagnosticRouter } from "./routes/diagnosticRoutes.js";
+import { activeRoundControllers } from "./services/activeRoundControllers.js";
+import { conversationRouter } from "./routes/conversationRoutes.js";
 
 
 
@@ -36,7 +38,6 @@ app.use(express.json())
 const anthropicProvider = new AnthropicAdapter(process.env.ANTHROPIC_API_KEY);
 const openaiProvider = new OpenAIAdapter(process.env.OPENAI_API_KEY);
 
-const activeRoundControllers = new Map<string, AbortController>();
 
 
 function getRoundEventPayload(event:RoundEvent): Prisma.InputJsonValue {
@@ -62,19 +63,8 @@ app.use('/api', diagnosticRouter);
 
 
 
-app.post("/api/conversations/:conversationId/stop", (req, res) => {
-  const controller = activeRoundControllers.get(req.params.conversationId);
+app.use("/api/conversations", conversationRouter);
 
-  if (!controller) {
-    res.json({ ok: true, stopped: false });
-    return;
-  }
-
-  controller?.abort();
-  activeRoundControllers.delete(req.params.conversationId);
-
-  res.json({ ok: true, stopped: true });
-});
 
 
 app.post("/api/round-test", async (req, res) => {
