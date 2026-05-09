@@ -52,7 +52,11 @@ export async function* runAdvisorRound(
       scores: ratings,
     };
 
-    const [topRating] = ratings;
+    const previousAdvisorId =
+      spokenAdvisorIds[spokenAdvisorIds.length - 1] ?? null;
+    const topRating = ratings.find(
+      (rating) => rating.advisorId !== previousAdvisorId
+    );
 
     if (!topRating || topRating.urgency < options.speakingThreshold) {
       break;
