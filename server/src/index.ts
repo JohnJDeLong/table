@@ -6,6 +6,7 @@ import { sidebarRouter } from "./routes/sidebarRoutes.js";
 import { diagnosticRouter } from "./routes/diagnosticRoutes.js";
 import { conversationRouter } from "./routes/conversationRoutes.js";
 import { conversationMessageRouter } from "./routes/conversationMessageRoutes.js";
+import { healthRouter } from "./routes/healthRoutes.js";
 
 
 
@@ -21,11 +22,15 @@ app.use(express.json())
 
 app.use('/api/sidebar', sidebarRouter);
 
-app.use('/api', diagnosticRouter);
+
 
 app.use("/api/conversations", conversationRouter);
 
 app.use('/api/conversations', conversationMessageRouter);
+
+app.use("/api/health", healthRouter);
+
+app.use("/api/diagnostics", diagnosticRouter);
 
 
 

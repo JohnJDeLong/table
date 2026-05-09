@@ -6,9 +6,6 @@ import { loadTableAdvisors } from "../orchestrator/loadTableAdvisors.js";
 
 export const diagnosticRouter = Router();
 
-diagnosticRouter.get("/health", (_req, res) => {
-  res.json({ ok: true });
-});
 
 diagnosticRouter.get("/db-test", async (_req, res) => {
   try {
