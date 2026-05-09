@@ -77,8 +77,8 @@ If the author explicitly asks "just write it for me," then write it. Otherwise, 
 - **SSE behind proxies.** Some local dev proxies buffer responses, which kills streaming. If tokens arrive in clumps in dev, check proxy config (Vite dev server, nginx if used).
 - **Anthropic system prompt format** is separate from the messages array. OpenAI and Gemini put system as a message with role `system`. Adapters must handle this difference.
 - **Token counting differs across providers.** Don't assume parity. If you need an estimate, use each provider's own tokenizer.
-- **Rate limits.** Phase 1 fans out parallel calls per round. With many rounds this can hit rate limits on free tiers. Backoff with retry on 429.
-- **Cost.** Each round costs N×Phase1 + N×Phase2 calls. A 10-round conversation with 4 advisors is ~80 API calls. Use cheap tiers for Phase 1.
+- **Rate limits.** Each advisor turn starts with a parallel urgency fan-out across active providers. With many turns this can hit rate limits on free tiers. Backoff with retry on 429.
+- **Cost.** With 4 active advisors and N advisor turns, the current loop costs roughly `N * 4` urgency-rating calls plus `N` response calls. Use cheap tiers for urgency scoring.
 
 ## What's Done / In Progress / Deferred
 

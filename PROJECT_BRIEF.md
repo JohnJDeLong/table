@@ -18,12 +18,16 @@ The disagreement between models is useful. Table treats that disagreement as the
 
 ## Core Mechanic
 
-Each round has two phases:
+Each user message starts a live urgency loop:
 
-1. Advisors rate how important it is for them to respond.
-2. Advisors speak in urgency order, with later speakers seeing what earlier speakers said.
+1. All active advisors rate how important it is for them to speak next.
+2. The highest-urgency advisor speaks if their score meets the threshold.
+3. The response is added to the conversation.
+4. All advisors rate urgency again before the next speaker is chosen.
 
 The room pauses when the advisors no longer think the conversation needs more input, when the round cap is reached, or when the user interrupts.
+
+With 4 active advisors and N advisor turns, the current loop makes roughly `N * 4` urgency-rating calls plus `N` response calls.
 
 ## MVP Success Criteria
 

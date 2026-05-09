@@ -85,8 +85,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Auto-scroll to newest message
 - [x] Continue the current backend conversation when the user sends follow-up prompts
 - [x] Stop button appears during active rounds and cancels the backend advisor run
-- [ ] Export/download finished discussion as a meeting-minutes PDF
-- [ ] Commit
+- [x] Commit
 
 ## Block 8: Add Gemini provider
 
@@ -98,7 +97,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Wire Gemini into `loadTableAdvisors`
 - [x] Enable Gemini in the default table once the adapter works
 - [x] Test `/api/urgency-test` and `/api/round-test` with Gemini active
-- [ ] Commit
+- [x] Commit
 
 ## Block 9: Add Grok provider
 
@@ -111,28 +110,22 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [x] Enable Grok in the default table once the adapter works
 - [x] Test `/api/urgency-test` with Grok active
 - [x] Test all four providers from the UI
-- [ ] Run final server/client builds
-- [ ] Commit
+- [x] Run final server/client builds
+- [x] Commit
 
 ## Block 10: All-provider end-to-end + conversation hygiene
 
-### Current focus: room behavior cleanup
 
 - [X] Harden urgency rating so hidden routing calls reliably return JSON
-- [ ] Treat failed urgency parsing as silent without noisy user-visible behavior
-- [ ] Add directed-advisor routing using table advisor display names/handles so prompts like "Sue..." or "Claude..." prioritize the named advisor
-- [ ] Hide empty advisor bubbles and handle per-advisor stream failures gracefully
-- [ ] Strengthen advisor room prompts so advisors do not explain routing mechanics or claim they are alone
+- [x] Treat failed urgency parsing as silent without noisy user-visible behavior
 
-- [ ] Confirm active providers participate through the database-backed table runtime
-- [ ] Run a full end-to-end conversation with follow-up prompts. Note bugs.
-- [ ] Load a saved conversation on app reload
-- [ ] Align UI, database, and provider conversation history so they share one source of truth
-- [ ] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
-- [ ] Persist visible partial advisor output on Stop so future provider context matches what the user saw
-- [ ] Add conversation deletion so removing a conversation also cleans up its messages, urgency ratings, and round events
-- [ ] Decide whether separate `UrgencyRating` rows are needed beyond persisted round event payloads
-- [ ] Commit
+- [x] Confirm active providers participate through the database-backed table runtime
+- [x] Run a full end-to-end conversation with follow-up prompts. Note bugs.
+- [x] Align UI, database, and provider conversation history so they share one source of truth
+- [x] Add message lifecycle status for streaming, completed, cancelled, and failed advisor messages
+- [x] Persist visible partial advisor output on Stop so future provider context matches what the user saw
+- [x] Decide whether separate `UrgencyRating` rows are needed beyond persisted round event payloads
+- [x] Commit
 
 ## Block 11: Auth, users, and profile foundation
 
@@ -142,8 +135,30 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Map authenticated users to `User` records
 - [ ] Load the authenticated user's recent conversations from the database
 - [ ] Let users reopen an existing conversation after refresh or login
+- [ ] Load a saved conversation on app reload once user identity is available
+- [ ] Add conversation deletion so removing a conversation also cleans up its messages, urgency ratings, and round events
 - [ ] Enforce workspace membership with `WorkspaceMember`
 - [ ] Add basic profile view/edit behavior
+- [ ] Commit
+
+## Block 11.5: Architecture & Refactoring
+
+- [ ] Split `server/src/index.ts` so it only owns Express app setup, middleware registration, route mounting, and `app.listen`
+- [ ] Move API route handlers into `server/src/routes/` in small slices, starting with `sidebar`, `auth`, `conversations`, and round/message streaming routes
+- [ ] Rename stale `*-test` endpoints before more frontend code couples to them
+- [ ] Replace `/api/round-test` with a production conversation message/turn endpoint
+- [ ] Move diagnostic-only routes under `/api/diagnostics/*` or delete them
+- [ ] Update frontend fetch calls and docs after route rename
+- [ ] Move reusable route/business logic into `server/src/services/` where a handler currently mixes request parsing, database work, orchestration, and persistence
+- [ ] Keep provider-specific code behind `LLMProvider` adapters while moving routes, with no direct SDK calls from routes/services
+- [ ] Replace cwd-dependent `dotenv.config({ path: "../.env" })` calls with one shared ESM-safe env loader that resolves the repo `.env` from module location
+- [ ] Fix the `server/src/config/supabase.ts` dotenv path typo if still present during env-loader cleanup
+- [ ] Extract frontend auth/session loading from `client/src/App.tsx` into a focused hook or helper
+- [ ] Extract sidebar loading/state from `client/src/App.tsx` into a focused hook or component boundary
+- [ ] Extract SSE parsing/round streaming from `client/src/App.tsx` into a focused hook so UI rendering is not responsible for stream protocol details
+- [ ] Split visible UI from `client/src/App.tsx` into components such as sidebar, message thread, composer, urgency/advisor indicators, and conversation actions
+- [ ] Re-run server/client builds after each small extraction to catch import and behavior regressions early
+- [ ] Update docs if the final folder structure differs from `AGENTS.md`
 - [ ] Commit
 
 ## Block 12: Real workspace, table, and advisor controls
@@ -157,6 +172,7 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Add real behavior for table `+`
 - [ ] Add real behavior for advisor `+`
 - [ ] Add basic edit/delete behavior where needed
+- [ ] Export/download finished discussion as a meeting-minutes PDF
 - [ ] Commit
 
 ## Block 13: Custom advisor/persona builder
@@ -172,6 +188,9 @@ Active task list, block-by-block. Update statuses as work progresses.
 
 - [ ] Fix bugs from Blocks 8-13
 - [ ] UI polish pass
+- [ ] Strengthen advisor room prompts so advisors do not explain routing mechanics or claim they are alone
+- [ ] Add directed-advisor routing using table advisor display names/handles so prompts like "Sue..." or "Claude..." prioritize the named advisor
+- [ ] Hide empty advisor bubbles and handle per-advisor stream failures gracefully
 - [ ] Improve shared advisor prompts based on real outputs if needed
 - [ ] Update README quick-start section with real instructions
 - [ ] Record demo video (60-90 seconds, the magic moment)
@@ -182,3 +201,5 @@ Active task list, block-by-block. Update statuses as work progresses.
 - [ ] Deploy to a public URL
 - [ ] Add @-mention to call on a specific advisor out of order
 - [ ] Add custom table templates
+- [ ] add separate queryable `UrgencyRating` rows for analytics/debugging beyond `RoundEvent` payloads
+- [ ] Replace the advisor-as-user provider history trick with an explicit transcript/context renderer before serious persona tuning

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent, } from 'react';
 import './App.css';
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./lib/supabase";
+import { LoginPage } from "./components/LoginPage";
+
 
 type StreamState = { 
   text: string;
@@ -63,6 +67,9 @@ function App() {
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   
   const activeWorkspace =
@@ -87,6 +94,25 @@ function App() {
 
   const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     async function loadSidebar() {
       const res = await fetch("/api/sidebar");
@@ -102,6 +128,12 @@ function App() {
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth"});
   }, [messages]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setIsProfileMenuOpen(false);
+  }
+
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     
@@ -136,7 +168,7 @@ function App() {
     setResponse({ text: '' });// starts a fresh streamed response 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
-
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
 
 
     try {
@@ -145,6 +177,9 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(currentSession?.access_token
+            ? {Authorization: `Bearer ${currentSession.access_token}`}
+            : {}),
         },
         body: JSON.stringify({ prompt: submittedPrompt, conversationId }),
         signal: abortController.signal,
@@ -261,6 +296,22 @@ function App() {
     }
     abortControllerRef.current?.abort();
   }
+
+  if (isAuthLoading) {
+    return <main className="login-shell">Loading...</main>;
+  }
+
+  if (!session) {
+    return (
+      <LoginPage
+        onAuthenticated={async () => {
+          const { data } = await supabase.auth.getSession();
+          setSession(data.session);
+        }}
+      />
+    );
+  }
+
 
 
  return (
@@ -379,13 +430,31 @@ function App() {
         </section>
       </div>
 
-      <div className="sidebar-footer">
-        <button type="button" className="footer-button">
-          Settings
-        </button>
-        <button type="button" className="footer-button">
+      <div className= "profile-menu-wrap">
+        <button
+          className='footer-button'
+          type='button'
+          onClick={() =>setIsProfileMenuOpen((current) => !current)}
+        >
           Profile
         </button>
+
+        {isProfileMenuOpen && (
+          <div className='profile-menu'>
+            <p className='profile-email'>{session.user.email}</p>
+            <button className="profile-menu-button" type="button">
+              Settings
+            </button>
+
+            <button
+              className='profile-signout-button'
+              type='button'
+              onClick={handleSignOut}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </aside>
 

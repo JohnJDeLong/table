@@ -14,21 +14,26 @@ A panel of AI advisors — each backed by a different foundation model — reaso
 
 ## How it works
 
-Each user message triggers a two-phase orchestration:
+Each user message triggers a live urgency loop:
 
-1. **Urgency round (parallel)** — every advisor rates how strongly they need to respond.
-2. **Response round (sequential)** — advisors speak in urgency order. Each later speaker reads what the earlier speakers said in this round.
+1. **Urgency pass (parallel)** — every active advisor rates how important it is for them to speak next.
+2. **Highest-urgency response** — the top advisor speaks if their urgency meets the threshold.
+3. **Recalibration** — the response is added to the conversation, then every advisor rates urgency again before the next speaker is chosen.
 
-After each round, urgency is recomputed. The conversation continues until the room goes quiet on its own (urgency drops below a threshold) or you interrupt.
+The conversation continues until the room goes quiet on its own (urgency drops below a threshold), the temporary turn cap is reached, or you interrupt.
+
+With 4 active advisors and N advisor turns, the loop makes roughly `N * 4` urgency-rating calls plus `N` response calls.
 
 ```
 User message
    ↓
-Urgency round (parallel)
+Urgency pass (parallel across advisors)
    ↓
-Responses in urgency order (sequential)
+Highest-urgency advisor responds
    ↓
-Urgency recomputed → continue or pause
+Urgency recalibrated against updated conversation
+   ↓
+Continue or pause
 ```
 
 The live experience reads like a focused group conversation. When the user is done, Table can produce a timestamped **meeting-minutes** document for export.
