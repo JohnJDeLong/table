@@ -40,22 +40,13 @@ function App() {
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const { sidebarData } = useSidebarData();
-
+  const {
+  activeWorkspace,
+  activeTable,
+  sidebarAdvisors,
+  selectActiveTable,
+} = useSidebarData();
   
-  const activeWorkspace =
-    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
-    sidebarData?.workspaces[0] ??
-    null;
-
-  const activeTable =
-    activeWorkspace?.tables.find((table) => table.id === selectedTableId) ??
-    activeWorkspace?.tables[0] ??
-    null;
-
-  const sidebarAdvisors = activeTable?.advisors ?? [];
 
   const advisorDisplayNames = Object.fromEntries(
     sidebarAdvisors.map((advisor) => [advisor.speakerId, advisor.name])
@@ -274,19 +265,8 @@ function App() {
 
               <button
                 type="button"
-                className={`room-item ${activeTable?.id === selectedTableId || (!selectedTableId && activeTable)
-                  ? "room-item--active"
-                  : ""
-                }`}
-                onClick={() => {
-                  if (activeWorkspace) {
-                    setSelectedWorkspaceId(activeWorkspace.id);
-                  }
-
-                  if (activeTable) {
-                    setSelectedTableId(activeTable.id);
-                  }
-                }}
+                className={`room-item ${activeTable ? "room-item--active" : ""}`}
+                onClick={selectActiveTable}
               >
                 {activeTable?.name ?? "Loading table"}
               </button>

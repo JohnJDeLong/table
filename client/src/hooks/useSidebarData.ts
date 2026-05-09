@@ -3,6 +3,8 @@ import type { SidebarData } from "../types/sidebar";
 
 export function useSidebarData() {
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSidebar() {
@@ -15,5 +17,34 @@ export function useSidebarData() {
     void loadSidebar();
   }, []);
 
-  return { sidebarData };
+  const activeWorkspace =
+    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
+    sidebarData?.workspaces[0] ??
+    null;
+
+  const activeTable =
+    activeWorkspace?.tables.find((table) => table.id === selectedTableId) ??
+    activeWorkspace?.tables[0] ??
+    null;
+
+  const sidebarAdvisors = activeTable?.advisors ?? [];
+
+  function selectActiveTable() {
+    if (activeWorkspace) {
+      setSelectedWorkspaceId(activeWorkspace.id);
+    }
+
+    if (activeTable) {
+      setSelectedTableId(activeTable.id);
+    }
+  }
+
+  return {
+    sidebarData,
+    activeWorkspace,
+    activeTable,
+    sidebarAdvisors,
+    selectActiveTable,
+  };
 }
+
