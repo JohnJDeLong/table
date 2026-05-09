@@ -1,8 +1,6 @@
 import type { RefObject } from "react";
 import type { ChatMessage, StreamState } from "../types/chat";
 
-
-
 type MessageThreadProps = {
   messages: ChatMessage[];
   response: StreamState | null;

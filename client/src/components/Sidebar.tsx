@@ -1,7 +1,10 @@
 import type { CSSProperties } from "react";
-import type { SidebarAdvisor, SidebarTable, SidebarWorkspace } from "../types/sidebar";
 import type { UrgencyRating } from "../types/chat";
-
+import type {
+  SidebarAdvisor,
+  SidebarTable,
+  SidebarWorkspace,
+} from "../types/sidebar";
 
 type SidebarProps = {
   activeWorkspace: SidebarWorkspace | null;
@@ -10,7 +13,6 @@ type SidebarProps = {
   urgencyRatings: UrgencyRating[];
   selectActiveTable: () => void;
 };
-
 
 export function Sidebar({
   activeWorkspace,
@@ -21,7 +23,7 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className="sidebar">
-        <div>
+      <div>
         <div className="sidebar-brand">Table</div>
 
         <section className="sidebar-section">
@@ -59,12 +61,13 @@ export function Sidebar({
 
               <button
                 type="button"
-                className={`room-item ${activeTable ? "room-item--active" : ""}`}
+                className={`room-item ${
+                  activeTable ? "room-item--active" : ""
+                }`}
                 onClick={selectActiveTable}
               >
                 {activeTable?.name ?? "Loading table"}
               </button>
-
 
               <div className="advisor-list">
                 <div className="sidebar-section-header sidebar-section-header--nested">
@@ -109,7 +112,9 @@ export function Sidebar({
                         data-tooltip={tooltipText}
                         style={
                           advisor.enabled
-                            ? ({ "--urgency-opacity": urgencyOpacity } as CSSProperties)
+                            ? ({
+                                "--urgency-opacity": urgencyOpacity,
+                              } as CSSProperties)
                             : undefined
                         }
                         tabIndex={0}

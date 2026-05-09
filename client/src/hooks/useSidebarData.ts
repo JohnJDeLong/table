@@ -3,7 +3,9 @@ import type { SidebarData } from "../types/sidebar";
 
 export function useSidebarData() {
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(
+    null
+  );
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,7 +20,9 @@ export function useSidebarData() {
   }, []);
 
   const activeWorkspace =
-    sidebarData?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
+    sidebarData?.workspaces.find(
+      (workspace) => workspace.id === selectedWorkspaceId
+    ) ??
     sidebarData?.workspaces[0] ??
     null;
 
@@ -55,4 +59,3 @@ export function useSidebarData() {
     getSpeakerName,
   };
 }
-
