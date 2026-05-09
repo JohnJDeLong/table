@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent, } from 'react';
 import './App.css';
+import { useSidebarData } from "./hooks/useSidebarData";
+
+
 
 type StreamState = { 
   text: string;
@@ -21,34 +24,11 @@ type ChatMessage = {
   text: string;
 };
 
-type SidebarAdvisor = {
-  id: string;
-  profileId: string;
-  speakerId: string;
-  name: string;
-  provider: string;
-  enabled: boolean;
-  position: number;
-};
 
-type SidebarTable = {
-  id: string;
-  name: string;
-  description: string | null;
-  pauseThreshold: number;
-  maxTurnsPerRound: number;
-  advisors: SidebarAdvisor[];
-};
 
-type SidebarWorkspace = {
-  id: string;
-  name: string;
-  tables: SidebarTable[];
-};
 
-type SidebarData = {
-  workspaces: SidebarWorkspace[];
-};
+
+
 
 
 
@@ -60,9 +40,9 @@ function App() {
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const { sidebarData } = useSidebarData();
 
   
   const activeWorkspace =
@@ -87,17 +67,7 @@ function App() {
 
   const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  useEffect(() => {
-    async function loadSidebar() {
-      const res = await fetch("/api/sidebar");
-      const data = await res.json();
-
-      setSidebarData(data);
-    }
-
-    void loadSidebar();
-  }, []);
-
+ 
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth"});
