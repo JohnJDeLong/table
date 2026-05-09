@@ -1,11 +1,7 @@
 import type { CSSProperties } from "react";
 import type { SidebarAdvisor, SidebarTable, SidebarWorkspace } from "../types/sidebar";
+import type { UrgencyRating } from "../types/chat";
 
-type UrgencyRating = {
-  advisorId: string;
-  urgency: number;
-  reason: string;
-};
 
 type SidebarProps = {
   activeWorkspace: SidebarWorkspace | null;

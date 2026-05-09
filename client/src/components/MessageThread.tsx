@@ -1,16 +1,7 @@
 import type { RefObject } from "react";
+import type { ChatMessage, StreamState } from "../types/chat";
 
-type ChatMessage = {
-  id: string;
-  speakerId: string;
-  speakerType: "user" | "advisor";
-  text: string;
-};
 
-type StreamState = {
-  text: string;
-  error?: string;
-};
 
 type MessageThreadProps = {
   messages: ChatMessage[];

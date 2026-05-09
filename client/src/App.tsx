@@ -4,33 +4,7 @@ import { useSidebarData } from "./hooks/useSidebarData";
 import { Sidebar } from "./components/Sidebar";
 import { MessageThread } from "./components/MessageThread";
 import { Composer } from "./components/Composer";
-
-
-
-
-type StreamState = { 
-  text: string;
-  error?: string;
-};
-
-
-
-type UrgencyRating = {
-  advisorId: string;
-  urgency: number;
-  reason: string;
-};
-
-type ChatMessage = {
-  id: string;
-  speakerId: string;
-  speakerType: "user" | "advisor";
-  text: string;
-};
-
-
-
-
+import type { ChatMessage, StreamState, UrgencyRating } from "./types/chat";
 
 
 
