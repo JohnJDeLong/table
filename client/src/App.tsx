@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type SyntheticEvent, } from 'react';
 import './App.css';
 import { useSidebarData } from "./hooks/useSidebarData";
 import { Sidebar } from "./components/Sidebar";
+import { MessageThread } from "./components/MessageThread";
 
 
 
@@ -238,26 +239,13 @@ function App() {
         </p>
       </header>
 
-      <section className="room-thread">
-        {messages.map((message) => (
-          <article
-            className={`message-block message-block--${message.speakerType}`}
-            key={message.id}
-          >
-            <p className="speaker">{getSpeakerName(message.speakerId)}</p>
-            <p className="message-text">{message.text}</p>
-          </article>
-        ))}
-
-        {response?.error && (
-          <article className="message-block message-block--error">
-            <p className="speaker">Error</p>
-            <p className="message-text">{response.error}</p>
-          </article>
-        )}
-        <div ref={threadEndRef} />
-      </section>
-
+      <MessageThread
+        messages={messages}
+        response={response}
+        getSpeakerName={getSpeakerName}
+        threadEndRef={threadEndRef}
+      />
+      
       <form className="composer" onSubmit={handleSubmit}>
         <label htmlFor="prompt">Prompt</label>
         <textarea
