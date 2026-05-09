@@ -141,7 +141,7 @@ function App() {
 
     try {
       //post request made to front end that get forwarded to backend via configured proxy 
-      const res = await fetch('/api/round-test', {
+      const res = await fetch('/api/conversations/messages', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
