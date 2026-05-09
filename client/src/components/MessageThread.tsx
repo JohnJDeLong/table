@@ -1,19 +1,22 @@
-import type { RefObject } from "react";
+import { useEffect, useRef } from "react";
 import type { ChatMessage, StreamState } from "../types/chat";
 
 type MessageThreadProps = {
   messages: ChatMessage[];
   response: StreamState | null;
   getSpeakerName: (speakerId: string) => string;
-  threadEndRef: RefObject<HTMLDivElement | null>;
 };
 
 export function MessageThread({
   messages,
   response,
   getSpeakerName,
-  threadEndRef,
 }: MessageThreadProps) {
+    const threadEndRef = useRef<HTMLDivElement | null>(null);
+    
+    useEffect(() => {
+        threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, [messages]);
   return (
     <section className="room-thread">
       {messages.map((message) => (

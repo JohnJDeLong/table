@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { useRef, useState, type SyntheticEvent } from "react";
 import "./App.css";
 import { Composer } from "./components/Composer";
 import { MessageThread } from "./components/MessageThread";
@@ -21,12 +21,8 @@ function App() {
     getSpeakerName,
   } = useSidebarData();
 
-  const threadEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault(); // prevents entire page reload
@@ -205,7 +201,6 @@ function App() {
           messages={messages}
           response={response}
           getSpeakerName={getSpeakerName}
-          threadEndRef={threadEndRef}
         />
 
         <Composer
