@@ -3,6 +3,7 @@ import './App.css';
 import { useSidebarData } from "./hooks/useSidebarData";
 import { Sidebar } from "./components/Sidebar";
 import { MessageThread } from "./components/MessageThread";
+import { Composer } from "./components/Composer";
 
 
 
@@ -245,29 +246,14 @@ function App() {
         getSpeakerName={getSpeakerName}
         threadEndRef={threadEndRef}
       />
-      
-      <form className="composer" onSubmit={handleSubmit}>
-        <label htmlFor="prompt">Prompt</label>
-        <textarea
-          id="prompt"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }
-          }}
-        />
 
-
-        <button
-          type={isLoading ? "button" : "submit"}
-          onClick={isLoading ? handleStop : undefined}
-        >
-          {isLoading ? "Stop" : "Ask"}
-        </button>
-      </form>
+      <Composer
+        prompt={prompt}
+        isLoading={isLoading}
+        onPromptChange={setPrompt}
+        onSubmit={handleSubmit}
+        onStop={handleStop}
+      />
     </section>
   </main>
 );
