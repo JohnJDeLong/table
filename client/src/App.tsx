@@ -1,13 +1,19 @@
-import { useState, type SyntheticEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import "./App.css";
 import { Composer } from "./components/Composer";
+import { LoginPage } from "./components/LoginPage";
 import { MessageThread } from "./components/MessageThread";
 import { Sidebar } from "./components/Sidebar";
-import { useSidebarData } from "./hooks/useSidebarData";
 import { useConversationRound } from "./hooks/useConversationRound";
+import { useSidebarData } from "./hooks/useSidebarData";
+import { supabase } from "./lib/supabase";
 
 function App() {
   const [prompt, setPrompt] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const {
     response,
@@ -16,7 +22,7 @@ function App() {
     messages,
     sendPrompt,
     stopRound,
-  } = useConversationRound();
+  } = useConversationRound(session?.access_token);
 
   const {
     activeWorkspace,
@@ -25,6 +31,29 @@ function App() {
     selectActiveTable,
     getSpeakerName,
   } = useSidebarData();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setIsProfileMenuOpen(false);
+  }
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +64,21 @@ function App() {
     await sendPrompt(submittedPrompt);
   }
 
+  if (isAuthLoading) {
+    return <main className="login-shell">Loading...</main>;
+  }
+
+  if (!session) {
+    return (
+      <LoginPage
+        onAuthenticated={async () => {
+          const { data } = await supabase.auth.getSession();
+          setSession(data.session);
+        }}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <Sidebar
@@ -43,6 +87,12 @@ function App() {
         sidebarAdvisors={sidebarAdvisors}
         urgencyRatings={urgencyRatings}
         selectActiveTable={selectActiveTable}
+        profileEmail={session.user.email ?? null}
+        isProfileMenuOpen={isProfileMenuOpen}
+        onProfileMenuToggle={() =>
+          setIsProfileMenuOpen((current) => !current)
+        }
+        onSignOut={handleSignOut}
       />
       <section className="room-shell">
         <header className="room-header">

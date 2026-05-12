@@ -10,7 +10,7 @@ Table is a multi-provider, multi-agent decision workspace. Provider-backed advis
 The system has three logical layers:
 
 1. **Provider adapter layer** — normalizes the differences between LLM provider SDKs behind a single streaming interface
-2. **Orchestration layer** — runs the urgency-rating round, sequences responses, manages cross-agent context, decides when the room pauses
+2. **Orchestration layer** — runs repeated urgency-scoring passes, sequences responses, manages cross-agent context, decides when the room pauses
 3. **UI layer** — chat-like live room with real-time streaming, user controls, and meeting-minutes export
 
 ## The Urgency Mechanic
@@ -23,11 +23,11 @@ All active provider-backed advisors are called in parallel with a small prompt:
 
 > "Rate how urgently you should speak next in the current conversation. 10 means staying quiet would seriously hurt the conversation. 0 means you have nothing distinct to add. Reply only with JSON: { urgency: number, reason: string }."
 
-Urgency rating should use each provider's fast/low-cost configured model where available, since the response is a small JSON. Cost matters here because urgency is recalculated after each advisor response.
+Urgency rating should use each provider's fast/low-cost configured model where available, since the response is a small JSON. Cost matters here because urgency is recalculated before each advisor turn. With 4 active advisors and N advisor turns, the current loop makes roughly `N * 4` urgency-rating calls plus `N` response calls.
 
 ### Step 2: Highest-Urgency Response
 
-Advisors are sorted by urgency descending. If the top advisor meets the speaking threshold, that advisor generates a full streamed response using the current conversation context. The response is appended to the conversation, then all advisors rate urgency again against the updated context before the next speaker is chosen. An advisor may speak more than once in the same round if the conversation makes their input newly important.
+Advisors are sorted by urgency descending after each scoring pass. If the top advisor meets the speaking threshold, that advisor generates a full streamed response using the current conversation context. The response is appended to the conversation, then all advisors rate urgency again against the updated context before the next speaker is chosen. An advisor may speak more than once in the same round if the conversation makes their input newly important.
 
 ### Pause Conditions
 

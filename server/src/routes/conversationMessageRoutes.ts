@@ -11,6 +11,7 @@ import { runAdvisorRound, type RoundEvent } from "../orchestrator/runAdvisorRoun
 import { saveRoundEvent } from "../events/saveRoundEvent.js";
 import { markAdvisorMessageStatus, saveAdvisorMessage, updateAdvisorMessage } from "../transcripts/saveAdvisorMessage.js";
 import { sendSse } from "../utils/sendSse.js";
+import { requireAuth } from "../auth/requireAuth.js";
 
 
 export const conversationMessageRouter = Router();
@@ -21,7 +22,7 @@ function getRoundEventPayload(event: RoundEvent): Prisma.InputJsonValue {
 
 
 
-conversationMessageRouter.post("/messages", async (req, res) => {
+conversationMessageRouter.post("/messages",requireAuth, async (req, res) => {
   let clientDisconnected = false;
   let activeConversationId: string | null = null;
 

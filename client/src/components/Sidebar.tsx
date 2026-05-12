@@ -12,6 +12,10 @@ type SidebarProps = {
   sidebarAdvisors: SidebarAdvisor[];
   urgencyRatings: UrgencyRating[];
   selectActiveTable: () => void;
+  profileEmail: string | null;
+  isProfileMenuOpen: boolean;
+  onProfileMenuToggle: () => void;
+  onSignOut: () => void | Promise<void>;
 };
 
 export function Sidebar({
@@ -20,6 +24,10 @@ export function Sidebar({
   sidebarAdvisors,
   urgencyRatings,
   selectActiveTable,
+  profileEmail,
+  isProfileMenuOpen,
+  onProfileMenuToggle,
+  onSignOut,
 }: SidebarProps) {
   return (
     <aside className="sidebar">
@@ -128,13 +136,31 @@ export function Sidebar({
         </section>
       </div>
 
-      <div className="sidebar-footer">
-        <button type="button" className="footer-button">
-          Settings
-        </button>
-        <button type="button" className="footer-button">
+      <div className="profile-menu-wrap">
+        <button
+          className="footer-button"
+          type="button"
+          onClick={onProfileMenuToggle}
+        >
           Profile
         </button>
+
+        {isProfileMenuOpen && (
+          <div className="profile-menu">
+            <p className="profile-email">{profileEmail}</p>
+            <button className="profile-menu-button" type="button">
+              Settings
+            </button>
+
+            <button
+              className="profile-signout-button"
+              type="button"
+              onClick={onSignOut}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

@@ -51,9 +51,9 @@ Urgency recomputed against the updated conversation
 Continue, let another advisor speak, or pause  
 
 
-## Urgency round
+## Urgency scoring pass
 
-During the urgency round, all advisors evaluate how strongly they should respond.
+During each urgency scoring pass, all advisors evaluate how strongly they should respond next.
 
 This happens in parallel across providers.
 
@@ -76,6 +76,8 @@ Urgency scale:
 
 The pause threshold is a configurable system value that determines when the conversation naturally stops.
 If no advisor reports urgency above this threshold, the room pauses.
+
+Because this pass runs before each advisor turn, the current provider-call shape is `N * active_advisors` urgency calls plus `N` response calls for N advisor turns. With 4 active advisors, that is roughly `N * 4 + N` provider calls.
 
 
 ## Turn selection
@@ -202,6 +204,7 @@ speaker_start
 token  
 token  
 speaker_end  
+urgency_scores  
 speaker_start  
 token  
 speaker_end  

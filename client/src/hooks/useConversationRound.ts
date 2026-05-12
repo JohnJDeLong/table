@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { ChatMessage, StreamState, UrgencyRating } from "../types/chat";
 import { parseSseEvent } from "../utils/parseSseEvent";
 
-export function useConversationRound() {
+export function useConversationRound(accessToken?: string) {
   const [response, setResponse] = useState<StreamState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [urgencyRatings, setUrgencyRatings] = useState<UrgencyRating[]>([]);
@@ -44,6 +44,7 @@ export function useConversationRound() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({ prompt: submittedPrompt, conversationId }),
         signal: abortController.signal,

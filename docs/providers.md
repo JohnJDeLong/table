@@ -172,7 +172,7 @@ Response generation
 Higher-quality response models where useful.
 
 
-This keeps urgency checks fast and cheap while saving stronger models for full responses.
+This keeps urgency checks fast and cheap while saving stronger models for full responses. Urgency checks run before each advisor turn, not just once per round; with 4 active advisors and N advisor turns, the current loop makes roughly `N * 4` urgency-rating calls plus `N` response calls.
 
 
 ## Error handling strategy
